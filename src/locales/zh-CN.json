@@ -1,5 +1,5 @@
 {
-  "title": "深度研究",
+  "title": "Deep Think",
   "theme": "系统主题",
   "openSource": "开源代码",
   "copyright": "{{name}} 团队用 ❤️ 构建",
@@ -242,6 +242,79 @@
       }
     },
     "placeholder": "请输入文本，或输入 \"/ \" 使用指令"
+  },
+  "deepThink": {
+    "mode": {
+      "label": "思考模式",
+      "deepThink": {
+        "title": "Deep Think",
+        "description": "深度思考模式 - 严谨推理与多轮验证"
+      },
+      "ultraThink": {
+        "title": "Ultra Think",
+        "description": "超级思考模式 - 多角度并行探索"
+      }
+    },
+    "status": {
+      "initializing": "初始化中...",
+      "thinking": "思考中 (第 {{iteration}} 轮 - {{phase}})",
+      "generatedSolution": "已生成第 {{iteration}} 轮解决方案",
+      "verification": "验证{{result}}",
+      "correcting": "修正中...",
+      "success": "找到完整解决方案！",
+      "failure": "未能找到完整解决方案"
+    },
+    "process": {
+      "title": "思考过程",
+      "inProgress": "进行中"
+    },
+    "iteration": {
+      "title": "迭代历史",
+      "current": "当前第 {{iteration}} 轮",
+      "number": "第 {{number}} 轮",
+      "status": {
+        "thinking": "思考中",
+        "verifying": "验证中",
+        "correcting": "修正中",
+        "completed": "已完成",
+        "failed": "失败"
+      }
+    },
+    "verification": {
+      "passed": "验证通过",
+      "failed": "验证失败"
+    },
+    "agent": {
+      "title": "Agent 进度",
+      "progress": "完成 {{completed}}/{{total}}",
+      "status": {
+        "pending": "等待中",
+        "thinking": "思考中",
+        "verifying": "验证中",
+        "completed": "已完成",
+        "failed": "失败"
+      },
+      "verifications": "验证 {{count}} 次"
+    },
+    "results": {
+      "success": "思考完成",
+      "summary": "经过 {{iterations}} 轮迭代，{{verifications}} 次成功验证",
+      "ultraThinkComplete": "Ultra Think 完成",
+      "ultraSummary": "总共 {{total}} 个 Agent，{{completed}} 个成功完成",
+      "finalSolution": "最终解决方案",
+      "currentSolution": "当前方案",
+      "synthesis": "综合分析",
+      "iterationHistory": "迭代历史",
+      "agentSolutions": "各 Agent 解决方案",
+      "originalPlan": "原始计划",
+      "viewBugReport": "查看问题报告",
+      "viewVerifications": "查看验证记录",
+      "error": "错误"
+    },
+    "config": {
+      "numAgents": "Agent 数量",
+      "numAgentsTip": "Ultra Think 模式下并行运行的 Agent 数量 (3-10)"
+    }
   },
   "setting": {
     "title": "设置",

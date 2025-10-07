@@ -5,18 +5,35 @@ import { researchStore } from "@/utils/storage";
 import { customAlphabet } from "nanoid";
 import { clone, pick } from "radash";
 
+// 通用历史记录，支持所有模式
 export interface ResearchHistory extends TaskStore {
   createdAt: number;
   updatedAt?: number;
 }
 
+export interface ThinkHistory {
+  id: string;
+  mode: "deep-think" | "ultra-think";
+  question: string;
+  result: DeepThinkResult | UltraThinkResult;
+  createdAt: number;
+  updatedAt?: number;
+}
+
+export type HistoryItem = ResearchHistory | ThinkHistory;
+
 export interface HistoryStore {
-  history: ResearchHistory[];
+  history: HistoryItem[];
 }
 
 interface HistoryActions {
   save: (taskStore: TaskStore) => string;
-  load: (id: string) => TaskStore | void;
+  saveThink: (
+    mode: "deep-think" | "ultra-think",
+    question: string,
+    result: DeepThinkResult | UltraThinkResult
+  ) => string;
+  load: (id: string) => HistoryItem | void;
   update: (id: string, taskStore: TaskStore) => boolean;
   remove: (id: string) => boolean;
 }
@@ -34,6 +51,21 @@ export const useHistoryStore = create(
           const newHistory: ResearchHistory = {
             ...clone(taskStore),
             id,
+            createdAt: Date.now(),
+          };
+          set((state) => ({ history: [newHistory, ...state.history] }));
+          return id;
+        }
+        return "";
+      },
+      saveThink: (mode, question, result) => {
+        if (question && result) {
+          const id = nanoid();
+          const newHistory: ThinkHistory = {
+            id,
+            mode,
+            question,
+            result: clone(result),
             createdAt: Date.now(),
           };
           set((state) => ({ history: [newHistory, ...state.history] }));

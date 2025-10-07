@@ -25,7 +25,13 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useTaskStore, type TaskStore } from "@/store/task";
-import { useHistoryStore, type ResearchHistory } from "@/store/history";
+import {
+  useHistoryStore,
+  type ResearchHistory,
+  type ThinkHistory,
+  type HistoryItem,
+} from "@/store/history";
+import { useGlobalStore } from "@/store/global";
 import { downloadFile } from "@/utils/file";
 import { fileParser } from "@/utils/parser";
 
@@ -79,12 +85,23 @@ function formatDate(timestamp: number) {
   return dayjs(timestamp).format("YYYY-MM-DD HH:mm");
 }
 
+// 类型守卫函数
+function isThinkHistory(item: HistoryItem): item is ThinkHistory {
+  return "mode" in item && (item.mode === "deep-think" || item.mode === "ultra-think");
+}
+
 function History({ open, onClose }: HistoryProps) {
   const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { backup, restore, reset } = useTaskStore();
   const { history, save, load, update, remove } = useHistoryStore();
-  const [historyList, setHistoryList] = useState<ResearchHistory[]>([]);
+  const {
+    setThinkMode,
+    setDeepThinkResult,
+    setUltraThinkResult,
+    resetThinkResults,
+  } = useGlobalStore();
+  const [historyList, setHistoryList] = useState<HistoryItem[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const showLoadMore = useMemo(() => {
     return history.length > currentPage * PAGE_SIZE;
@@ -104,25 +121,59 @@ function History({ open, onClose }: HistoryProps) {
   }
 
   function loadHistory(id: string) {
-    const { id: currentId } = useTaskStore.getState();
     const data = load(id);
-    if (data) {
+    if (!data) return;
+
+    // 判断是哪种类型的历史记录
+    if (isThinkHistory(data)) {
+      // Think 模式历史记录
+      // 先保存当前 Research 状态（如果有的话）
+      const { id: currentId, backup: backupTask } = useTaskStore.getState();
+      if (currentId) {
+        update(currentId, backupTask());
+      }
+      
+      resetThinkResults();
+      setThinkMode(data.mode);
+      const { setQuestion } = useTaskStore.getState();
+      setQuestion(data.question);
+      
+      if (data.mode === "deep-think") {
+        setDeepThinkResult(data.result as DeepThinkResult);
+      } else if (data.mode === "ultra-think") {
+        setUltraThinkResult(data.result as UltraThinkResult);
+      }
+    } else {
+      // Research 模式历史记录（ResearchHistory 扩展自 TaskStore）
+      // 先重置 Think 结果
+      resetThinkResults();
+      
+      const { id: currentId } = useTaskStore.getState();
       update(currentId, backup());
       reset();
-      restore(data);
+      // ResearchHistory 扩展自 TaskStore，可以安全转换
+      const researchData = data as ResearchHistory;
+      restore(researchData);
     }
     onClose();
   }
 
   function downloadResearch(id: string) {
     const data = load(id);
-    if (data) {
-      downloadFile(
-        JSON.stringify(data, null, 4),
-        `${data.title}.json`,
-        "application/json;charset=utf-8"
-      );
+    if (!data) return;
+
+    let filename = "download.json";
+    if (isThinkHistory(data)) {
+      filename = `${data.mode}_${data.question.slice(0, 20)}.json`;
+    } else {
+      filename = `${data.title || data.question}.json`;
     }
+
+    downloadFile(
+      JSON.stringify(data, null, 4),
+      filename,
+      "application/json;charset=utf-8"
+    );
   }
 
   function removeHistory(id: string) {
@@ -130,7 +181,17 @@ function History({ open, onClose }: HistoryProps) {
   }
 
   function handleSearch(value: string) {
-    const options = { keys: ["question", "finalReport"] };
+    // 为不同类型的历史记录设置搜索键
+    const options = {
+      keys: [
+        "question",
+        "finalReport",
+        "title",
+        "mode",
+        "result.finalSolution",
+        "result.synthesis",
+      ],
+    };
     const knowledgeIndex = Fuse.createIndex(options.keys, history);
     const fuse = new Fuse(history, options, knowledgeIndex);
     const result = fuse.search(value);
@@ -204,20 +265,25 @@ function History({ open, onClose }: HistoryProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {historyList.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <p
-                          className="truncate w-96 max-lg:max-w-72 max-sm:max-w-52 cursor-pointer hover:text-blue-500"
-                          title={item.title}
-                          onClick={() => loadHistory(item.id)}
-                        >
-                          {item.title || item.question}
-                        </p>
-                      </TableCell>
-                      <TableCell className="text-center whitespace-nowrap max-sm:hidden">
-                        {formatDate(item.updatedAt || item.createdAt)}
-                      </TableCell>
+                  {historyList.map((item) => {
+                    const displayTitle = isThinkHistory(item)
+                      ? `[${item.mode === "deep-think" ? "深度思考" : "超级思考"}] ${item.question}`
+                      : (item as ResearchHistory).title || item.question;
+
+                    return (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <p
+                            className="truncate w-96 max-lg:max-w-72 max-sm:max-w-52 cursor-pointer hover:text-blue-500"
+                            title={displayTitle}
+                            onClick={() => loadHistory(item.id)}
+                          >
+                            {displayTitle}
+                          </p>
+                        </TableCell>
+                        <TableCell className="text-center whitespace-nowrap max-sm:hidden">
+                          {formatDate(item.updatedAt || item.createdAt)}
+                        </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center">
                           <Button
@@ -248,7 +314,8 @@ function History({ open, onClose }: HistoryProps) {
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                 </TableBody>
               </Table>
               <div

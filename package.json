@@ -1,6 +1,6 @@
 {
   "name": "deep-research",
-  "description": "Use any LLMs (Large Language Models) for Deep Research. Support SSE API and MCP server.",
+  "description": "Use any LLMs (Large Language Models) for Deep Think. Support SSE API and MCP server.",
   "version": "0.10.0",
   "license": "MIT",
   "repository": {
@@ -34,6 +34,7 @@
     "@radix-ui/react-dropdown-menu": "^2.1.6",
     "@radix-ui/react-label": "^2.1.2",
     "@radix-ui/react-popover": "^1.1.6",
+    "@radix-ui/react-progress": "^1.1.7",
     "@radix-ui/react-scroll-area": "^1.2.6",
     "@radix-ui/react-select": "^2.1.6",
     "@radix-ui/react-separator": "^1.1.2",
@@ -111,5 +112,6 @@
   "engines": {
     "npm": ">= 9.8.0",
     "node": ">= 18.18.0"
-  }
+  },
+  "packageManager": "pnpm@10.14.0+sha512.ad27a79641b49c3e481a16a805baa71817a04bbe06a38d17e60e2eaee83f6a146c6a688125f5792e48dd5ba30e7da52a5cda4c3992b9ccf333f9ce223af84748"
 }
