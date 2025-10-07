@@ -54,11 +54,29 @@ export const useGlobalStore = create<GlobalStore & GlobalActions>((set) => ({
   setCurrentSolution: (solution) => set({ currentSolution: solution }),
   setAgentResults: (agents) => set({ agentResults: agents }),
   updateAgentResult: (agentId, update) =>
-    set((state) => ({
-      agentResults: state.agentResults.map((agent) =>
-        agent.agentId === agentId ? { ...agent, ...update } : agent
-      ),
-    })),
+    set((state) => {
+      const existingIndex = state.agentResults.findIndex(
+        (agent) => agent.agentId === agentId
+      );
+
+      if (existingIndex >= 0) {
+        // Update existing agent
+        const updated = [...state.agentResults];
+        updated[existingIndex] = { ...updated[existingIndex], ...update };
+        return { agentResults: updated };
+      } else {
+        // Add new agent if it doesn't exist (LLM-driven dynamic creation)
+        const newAgent: AgentResult = {
+          agentId,
+          approach: "",
+          specificPrompt: "",
+          status: "pending",
+          progress: 0,
+          ...update,
+        };
+        return { agentResults: [...state.agentResults, newAgent] };
+      }
+    }),
   resetThinkResults: () =>
     set({
       deepThinkResult: null,

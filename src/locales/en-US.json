@@ -243,6 +243,79 @@
     },
     "placeholder": "Please enter text, or enter \"/ \" to use commands"
   },
+  "deepThink": {
+    "mode": {
+      "label": "Thinking Mode",
+      "deepThink": {
+        "title": "Deep Think",
+        "description": "Deep thinking mode - rigorous reasoning and multi-round verification"
+      },
+      "ultraThink": {
+        "title": "Ultra Think",
+        "description": "Ultra thinking mode - multi-perspective parallel exploration"
+      }
+    },
+    "status": {
+      "initializing": "Initializing...",
+      "thinking": "Thinking (Round {{iteration}} - {{phase}})",
+      "generatedSolution": "Generated solution for round {{iteration}}",
+      "verification": "Verification {{result}}",
+      "correcting": "Correcting (Round {{iteration}})",
+      "success": "Complete solution found!",
+      "failure": "Failed to find complete solution"
+    },
+    "process": {
+      "title": "Thinking Process",
+      "inProgress": "In Progress"
+    },
+    "iteration": {
+      "title": "Iteration History",
+      "current": "Current Round {{iteration}}",
+      "number": "Round {{number}}",
+      "status": {
+        "thinking": "Thinking",
+        "verifying": "Verifying",
+        "correcting": "Correcting",
+        "completed": "Completed",
+        "failed": "Failed"
+      }
+    },
+    "verification": {
+      "passed": "Passed",
+      "failed": "Failed"
+    },
+    "agent": {
+      "title": "Agent Progress",
+      "progress": "{{completed}}/{{total}} completed",
+      "status": {
+        "pending": "Pending",
+        "thinking": "Thinking",
+        "verifying": "Verifying",
+        "completed": "Completed",
+        "failed": "Failed"
+      },
+      "verifications": "{{count}} verifications"
+    },
+    "results": {
+      "success": "Thinking Complete",
+      "summary": "After {{iterations}} iterations, {{verifications}} successful verifications",
+      "ultraThinkComplete": "Ultra Think Complete",
+      "ultraSummary": "Total {{total}} agents, {{completed}} successfully completed",
+      "finalSolution": "Final Solution",
+      "currentSolution": "Current Solution",
+      "synthesis": "Synthesis Analysis",
+      "iterationHistory": "Iteration History",
+      "agentSolutions": "Agent Solutions",
+      "originalPlan": "Original Plan",
+      "viewBugReport": "View Bug Report",
+      "viewVerifications": "View Verifications",
+      "error": "Error"
+    },
+    "config": {
+      "numAgents": "Number of Agents",
+      "numAgentsTip": "Number of agents running in parallel in Ultra Think mode (3-10)"
+    }
+  },
   "setting": {
     "title": "Setting",
     "description": "All settings are saved in the user's browser.",

@@ -260,7 +260,7 @@
       "thinking": "思考中 (第 {{iteration}} 轮 - {{phase}})",
       "generatedSolution": "已生成第 {{iteration}} 轮解决方案",
       "verification": "验证{{result}}",
-      "correcting": "修正中...",
+      "correcting": "修正中 (第 {{iteration}} 轮)",
       "success": "找到完整解决方案！",
       "failure": "未能找到完整解决方案"
     },

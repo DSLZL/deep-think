@@ -60,7 +60,7 @@ function Topic() {
   } = useAccurateTimer();
   const [isThinking, setIsThinking] = useState<boolean>(false);
   const [openCrawler, setOpenCrawler] = useState<boolean>(false);
-  const [numAgents, setNumAgents] = useState<number>(5);
+  const [numAgents, setNumAgents] = useState<number>(0); // 0 = auto mode
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -141,7 +141,13 @@ function Topic() {
             saveThink("deep-think", values.topic, result);
           }
         } else if (thinkMode === "ultra-think") {
-          const result = await runUltraThinkMode(values.topic, numAgents, [], knowledgeContext);
+          // Pass undefined if numAgents is 0 (auto mode)
+          const result = await runUltraThinkMode(
+            values.topic, 
+            numAgents === 0 ? undefined : numAgents, 
+            [], 
+            knowledgeContext
+          );
           if (result) {
             setUltraThinkResult(result);
             // 保存到历史记录
@@ -224,14 +230,14 @@ function Topic() {
               <FormControl>
                 <Input
                   type="number"
-                  min={3}
+                  min={0}
                   max={10}
                   value={numAgents}
                   onChange={(e) => setNumAgents(parseInt(e.target.value))}
                 />
               </FormControl>
               <p className="text-xs text-gray-500 mt-1">
-                {t("deepThink.config.numAgentsTip")}
+                {t("deepThink.config.numAgentsTip")} (0 = Auto)
               </p>
             </FormItem>
           )}
