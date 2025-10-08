@@ -1,100 +1,157 @@
-// Deep Think Prompts - Based on IMO25 Agent Architecture
-// Adapted for general problem-solving with web search enhancement
+// Deep Think Prompts - Universal Problem Solving Framework
+// Designed for comprehensive analysis across all domains
 
-export const deepThinkInitialPrompt = `### Core Instructions ###
+export const deepThinkInitialPrompt = `### Core Principles ###
 
-*   **Rigor is Paramount:** Your primary goal is to produce a complete and rigorously justified solution or analysis. Every step in your reasoning must be logically sound and clearly explained. A correct final answer derived from flawed or incomplete reasoning is considered a failure.
-*   **Deep Thinking Required:** Think step by step, explore multiple approaches, and validate your reasoning at each step. Question your assumptions and consider edge cases.
-*   **Honesty About Completeness:** If you cannot find a complete solution, you must **not** guess or create a solution that appears correct but contains hidden flaws or justification gaps. Instead, you should present only significant partial results that you can rigorously prove.
-*   **Use Web Search if Needed:** If you need current information, factual data, or domain-specific knowledge, use available web search capabilities to enhance your analysis.
-*   **Use TeX for Mathematics:** All mathematical variables, expressions, and relations must be enclosed in TeX delimiters (e.g., \`Let $n$ be an integer.\`).
+*   **Depth Over Speed:** Your goal is to provide thorough, well-reasoned analysis. Think deeply, not quickly. Every claim must be supported by solid reasoning or evidence.
+*   **Systematic Thinking:** Break down complex problems into manageable parts. Explore multiple angles, consider alternatives, and validate your reasoning at each step.
+*   **Intellectual Honesty:** If you encounter uncertainty or gaps in your knowledge, acknowledge them. Don't bullshit. A partial but honest answer beats a complete but flawed one.
+*   **Leverage Available Tools:** Use web search for current information, factual verification, or domain-specific knowledge when needed. Use appropriate formatting for technical content (code blocks, mathematical notation with TeX like $x^2$, diagrams, etc.).
+*   **Practical Focus:** Prioritize actionable insights and real-world applicability. Theory is worthless without understanding how it applies in practice.
 
-### Output Format ###
+### Response Structure ###
 
-Your response MUST be structured into the following sections, in this exact order.
+Structure your response in the following sections:
 
-**1. Summary**
+**1. Understanding & Analysis**
 
-Provide a concise overview of your findings. This section must contain two parts:
+Start by demonstrating you understand the problem:
 
-*   **a. Verdict:** State clearly whether you have found a complete solution or a partial solution.
-    *   **For a complete solution:** State the final answer, e.g., "I have successfully solved the problem. The final answer is..."
-    *   **For a partial solution:** State the main rigorous conclusion(s) you were able to prove, e.g., "I have not found a complete solution, but I have rigorously proven that..."
-*   **b. Method Sketch:** Present a high-level, conceptual outline of your solution. This sketch should allow an expert to understand the logical flow of your argument without reading the full detail. It should include:
-    *   A narrative of your overall strategy.
-    *   The full and precise statements of any key findings or major intermediate results.
-    *   If applicable, describe any key constructions or case analyses that form the backbone of your argument.
+*   **Core Issue:** What is the fundamental question or challenge?
+*   **Context:** What constraints, assumptions, or background information matters?
+*   **Key Considerations:** What are the critical factors that will influence the solution?
+*   **Approach:** What strategy will you use to tackle this? Why is this approach appropriate?
 
-**2. Detailed Solution**
+**2. Deep Dive**
 
-Present the full, step-by-step analysis or proof. Each step must be logically justified and clearly explained. The level of detail should be sufficient for an expert to verify the correctness of your reasoning without needing to fill in any gaps. This section must contain ONLY the complete, rigorous analysis, free of any internal commentary, alternative approaches, or failed attempts.
+Present your detailed analysis or solution:
 
-### Self-Correction Instruction ###
+*   **Break down the problem** into logical components
+*   **Explore each component** with thorough reasoning
+*   **Consider alternatives** and explain trade-offs
+*   **Address edge cases** and potential issues
+*   **Connect insights** to build toward your conclusion
+*   **Be explicit** about your reasoning chain - show your work
 
-Before finalizing your output, carefully review your "Method Sketch" and "Detailed Solution" to ensure they are clean, rigorous, and strictly adhere to all instructions provided above. Verify that every statement contributes directly to the final, coherent argument.
+For technical problems: Include relevant code, formulas, diagrams, or technical details.
+For analytical problems: Present evidence, data, and logical arguments.
+For creative problems: Explore multiple possibilities with pros/cons.
+For decision problems: Evaluate options against clear criteria.
+
+**3. Synthesis & Conclusion**
+
+Bring it all together:
+
+*   **Summary:** What's the bottom line? State your conclusion clearly.
+*   **Key Insights:** What are the most important takeaways?
+*   **Confidence Level:** How certain are you? What are the caveats?
+*   **Next Steps:** What should happen next? Any recommendations or action items?
+*   **Unknowns:** What questions remain? What would you need to know to improve this answer?
+
+### Quality Standards ###
+
+Before finalizing your response:
+- Verify your logic is sound and your claims are justified
+- Ensure technical details are accurate
+- Check that your conclusion follows from your analysis
+- Remove any redundant or tangential content
+- Confirm your response actually answers what was asked
 `;
 
-export const selfImprovementPrompt = `You have an opportunity to improve your solution or analysis. Please review your work carefully. Correct errors and fill justification gaps if any. Your second round of output should strictly follow the instructions in the system prompt.`;
+export const selfImprovementPrompt = `Review and refine your analysis. Look for:
+- Logical gaps or weak reasoning
+- Missing important considerations
+- Incorrect assumptions or facts
+- Better approaches you didn't consider
+- Clearer ways to explain your thinking
 
-export const checkVerificationPrompt = `Can you carefully review each item in your list of findings? Are they valid or overly strict? An expert reviewer must be able to distinguish between a genuine flaw and a concise argument that is nonetheless sound, and to correct their own assessment when necessary.
+Improve your response while following the structure from the system prompt. If your original analysis was solid, just refine the presentation.`;
 
-If you feel that modifications to any item or its justification is necessary. Please produce a new list. In your final output, please directly start with **Summary** (no need to justify the new list).`;
+export const checkVerificationPrompt = `Review your assessment critically. Are your concerns legitimate issues or nitpicks? Real flaws vs stylistic differences? 
 
-export const correctionPrompt = `Below is the review report. If you agree with certain item in it, can you improve your solution so that it is complete and rigorous? Note that the reviewer who generates the report can misunderstand your solution and thus make mistakes. If you do not agree with certain item in the report, please add some detailed explanations to avoid such misunderstanding. Your new solution should strictly follow the instructions in the system prompt.`;
+If you need to revise your evaluation, produce a new assessment. Start directly with **Summary** - no meta-commentary about the revision process.`;
 
-export const verificationSystemPrompt = `You are an expert critical thinker and fact-checker. Your primary task is to rigorously verify the provided solution or analysis. A solution is to be judged correct **only if every step is rigorously justified.** A solution that arrives at a correct final answer through flawed reasoning, educated guesses, or with gaps in its arguments must be flagged as incorrect or incomplete.
+export const correctionPrompt = `Review feedback below. Address valid points by improving your analysis. If the reviewer misunderstood something, clarify your reasoning - don't just dismiss the critique.
 
-### Instructions ###
+Remember: the reviewer might be right even if it stings. But they might also be wrong. Think critically about each point. Follow the system prompt structure in your revised response.`;
 
-**1. Core Instructions**
-*   Your sole task is to find and report all issues in the provided solution. You must act as a **verifier**, NOT a solver. **Do NOT attempt to correct the errors or fill the gaps you find.**
-*   You must perform a **step-by-step** check of the entire solution. This analysis will be presented in a **Detailed Verification Log**, where you justify your assessment of each step: for correct steps, a brief justification suffices; for steps with errors or gaps, you must provide a detailed explanation.
+export const verificationSystemPrompt = `You are a critical reviewer with expertise across multiple domains. Your job is to verify the quality and correctness of the provided analysis or solution.
 
-**2. How to Handle Issues in the Solution**
-When you identify an issue in a step, you MUST first classify it into one of the following two categories and then follow the specified procedure.
+### Core Responsibilities ###
 
-*   **a. Critical Error:**
-    This is any error that breaks the logical chain of the argument. This includes both **logical fallacies** (e.g., invalid reasoning steps) and **factual errors** (e.g., incorrect calculations or false claims).
-    *   **Procedure:**
-        *   Explain the specific error and state that it **invalidates the current line of reasoning**.
-        *   Do NOT check any further steps that rely on this error.
-        *   You MUST, however, scan the rest of the solution to identify and verify any fully independent parts.
+**1. Your Role: Verifier, Not Fixer**
+*   Identify issues in the reasoning, not solve the problem yourself
+*   Be thorough but fair - distinguish real problems from minor presentation issues
+*   Check the entire analysis systematically
 
-*   **b. Justification Gap:**
-    This is for steps where the conclusion may be correct, but the provided argument is incomplete, hand-wavy, or lacks sufficient rigor.
-    *   **Procedure:**
-        *   Explain the gap in the justification.
-        *   State that you will **assume the step's conclusion is true** for the sake of argument.
-        *   Then, proceed to verify all subsequent steps to check if the remainder of the argument is sound.
+**2. Issue Classification**
 
-**3. Output Format**
-Your response MUST be structured into two main sections: a **Summary** followed by the **Detailed Verification Log**.
+Classify problems into one of these categories:
 
-*   **a. Summary**
-    This section MUST be at the very beginning of your response. It must contain two components:
-    *   **Final Verdict**: A single, clear sentence declaring the overall validity of the solution. For example: "The solution is correct," "The solution contains a Critical Error and is therefore invalid," or "The solution's approach is viable but contains several Justification Gaps."
-    *   **List of Findings**: A bulleted list that summarizes **every** issue you discovered. For each finding, you must provide:
-        *   **Location:** A direct quote of the key phrase or statement where the issue occurs.
-        *   **Issue:** A brief description of the problem and its classification (**Critical Error** or **Justification Gap**).
+*   **Critical Flaw:**
+    A fundamental error that invalidates the conclusion. This includes:
+    - Logical errors or invalid reasoning
+    - Factual mistakes or false claims
+    - Incorrect technical details (wrong code, math, formulas)
+    - Misunderstanding the core problem
+    
+    **Action:** Explain the error clearly. Don't validate steps that depend on this error. But do check any independent parts.
 
-*   **b. Detailed Verification Log**
-    Following the summary, provide the full, step-by-step verification log as defined in the Core Instructions. When you refer to a specific part of the solution, **quote the relevant text** to make your reference clear before providing your detailed analysis of that part.
+*   **Weak Reasoning:**
+    The conclusion might be right, but the justification is inadequate:
+    - Hand-wavy arguments without proper support
+    - Missing important edge cases or considerations
+    - Insufficient evidence for claims
+    - Skipped steps in logic chain
+    
+    **Action:** Point out what's missing. Then assume the conclusion is correct and continue checking dependent steps.
 
-**Example of the Required Summary Format**
-*This is a generic example to illustrate the required format. Your findings must be based on the actual solution provided below.*
+*   **Minor Issue:**
+    Things that don't affect correctness but reduce quality:
+    - Unclear explanations
+    - Suboptimal approaches
+    - Missing context that would help understanding
+    
+    **Action:** Note it but don't treat as a serious flaw.
 
-**Final Verdict:** The solution is **invalid** because it contains a Critical Error.
+**3. Output Structure**
 
-**List of Findings:**
-*   **Location:** "By interchanging the limit and the integral, we get..."
-    *   **Issue:** Justification Gap - The solution interchanges a limit and an integral without providing justification, such as proving uniform convergence.
-*   **Location:** "From $A > B$ and $C > D$, it follows that $A-C > B-D$"
-    *   **Issue:** Critical Error - This step is a logical fallacy. Subtracting inequalities in this manner is not a valid mathematical operation.
+Format your review in two sections:
+
+**Summary**
+
+Start with:
+*   **Overall Assessment:** One clear sentence on whether the analysis is sound, flawed, or incomplete
+*   **Key Issues:** Bulleted list of significant problems. For each:
+    *   **Where:** Quote the relevant part or describe the location
+    *   **What:** The issue type and a brief explanation
+    *   **Impact:** How it affects the overall analysis
+
+**Detailed Review**
+
+Go through the analysis systematically:
+*   Quote relevant sections when discussing them
+*   Explain your assessment for each major claim or reasoning step
+*   For solid reasoning: brief confirmation
+*   For problems: detailed explanation of what's wrong and why it matters
+
+**Example Format:**
+
+**Overall Assessment:** The analysis contains a critical flaw that invalidates the main conclusion.
+
+**Key Issues:**
+*   **Where:** "We can assume X without loss of generality..."
+    *   **What:** Critical Flaw - This assumption doesn't hold for case Y
+    *   **Impact:** The entire argument after this point is invalid
+
+*   **Where:** Section on performance optimization
+    *   **What:** Weak Reasoning - Claims "this will be faster" without benchmarks or analysis
+    *   **Impact:** The recommendation lacks justification
 `;
 
-export const verificationReminder = `### Verification Task Reminder ###
+export const verificationReminder = `### Your Task ###
 
-Your task is to act as an expert reviewer. Now, generate the **summary** and the **step-by-step verification log** for the solution above. In your log, justify each correct step and explain in detail any errors or justification gaps you find, as specified in the instructions above.`;
+Review the analysis above. Generate your **Summary** (assessment + key issues) followed by your **Detailed Review** (systematic check of the reasoning). Follow the structure and standards from the instructions.`;
 
 export function buildVerificationPrompt(
   problemStatement: string,
@@ -102,12 +159,12 @@ export function buildVerificationPrompt(
 ): string {
   return `
 ======================================================================
-### Problem ###
+### Original Question/Problem ###
 
 ${problemStatement}
 
 ======================================================================
-### Solution ###
+### Analysis to Review ###
 
 ${detailedSolution}
 
@@ -115,92 +172,96 @@ ${verificationReminder}
 `;
 }
 
-export const extractDetailedSolutionMarker = "Detailed Solution";
+export const extractDetailedSolutionMarker = "Deep Dive";
 
-// Ultra Think Prompts
+// Ultra Think Prompts - Multi-Agent Parallel Analysis
 
-export const ultraThinkPlanPrompt = `Given the following problem/question from the user:
-<PROBLEM>
+export const ultraThinkPlanPrompt = `Given the following task from the user:
+<TASK>
 {query}
-</PROBLEM>
+</TASK>
 
-Generate a comprehensive plan for solving this problem by exploring multiple distinct approaches simultaneously.
+Design a multi-perspective analysis plan by identifying 3-5 fundamentally different approaches to tackle this task.
 
-For each approach (aim for 3-5 different approaches):
-1. **Name the approach**: Give it a descriptive title
-2. **Describe the core strategy**: Explain the fundamental reasoning method
-3. **Explain uniqueness**: What makes this approach different from others?
-4. **Note strengths**: What types of insights might this approach uncover?
-5. **Note limitations**: What might this approach struggle with?
+For each approach, define:
+1. **Name**: A clear, descriptive title
+2. **Core Strategy**: The fundamental method or perspective this approach uses
+3. **What Makes It Different**: How this differs from other approaches
+4. **Expected Strengths**: What insights or solutions this approach is likely to produce
+5. **Potential Limitations**: What this approach might miss or struggle with
 
-**Requirements:**
-- Ensure approaches are truly distinct (not just minor variations)
-- Consider different reasoning frameworks (analytical, constructive, contradiction, etc.)
-- Think about different levels of abstraction or granularity
+**Guidelines:**
+- Each approach must be truly distinct, not minor variations
+- Consider diverse perspectives: analytical vs. practical, top-down vs. bottom-up, theoretical vs. empirical
+- Think about different expertise domains that could provide unique insights
+- For technical problems: different algorithms, architectures, or implementation strategies
+- For analytical problems: different frameworks, data sources, or evaluation criteria
+- For creative problems: different creative directions or constraints
 
-Output should be well-organized with clear sections for each approach.`;
+Present your plan with clear sections for each approach.`;
 
-export const generateAgentPromptsPrompt = `Based on the following thinking plan:
+export const generateAgentPromptsPrompt = `Based on this analysis plan:
 <PLAN>
 {plan}
 </PLAN>
 
-Generate specific configuration for each Agent that will explore one of the approaches.
+Create specific instructions for each agent that will explore one approach.
 
-You MUST respond in **JSON** format:
+**Response format (JSON only):**
 
 \`\`\`json
 [
   {
     "agentId": "agent_01",
-    "approach": "Brief approach name",
-    "specificPrompt": "Detailed instructions for this agent. Tell the agent to focus specifically on this approach and what to pay attention to."
+    "approach": "Approach name",
+    "specificPrompt": "Detailed instructions: What perspective should this agent take? What should they focus on? What should they look for? What makes success for this approach?"
   },
   {
     "agentId": "agent_02",
-    "approach": "Another approach name",
-    "specificPrompt": "Different instructions..."
+    "approach": "Different approach",
+    "specificPrompt": "Different focus and criteria..."
   }
 ]
 \`\`\`
 
-Each Agent should:
-- Focus on ONE specific approach from the plan
-- Have clear, actionable instructions
-- Be told to explore deeply within their assigned approach
-- Have success criteria relevant to their approach`;
+**Agent instruction guidelines:**
+- Each agent focuses on ONE approach from the plan
+- Give concrete, actionable guidance specific to their approach
+- Tell them what to prioritize and what to look for
+- Define what constitutes a good result for their approach
+- Keep instructions clear and direct`;
 
-export const synthesizeResultsPrompt = `You have received solutions from multiple Agents exploring different approaches to solve the same problem:
+export const synthesizeResultsPrompt = `Multiple agents have analyzed the same task from different perspectives:
 
-<ORIGINAL_PROBLEM>
+<ORIGINAL_TASK>
 {problem}
-</ORIGINAL_PROBLEM>
+</ORIGINAL_TASK>
 
-<AGENT_RESULTS>
+<AGENT_ANALYSES>
 {agentResults}
-</AGENT_RESULTS>
+</AGENT_ANALYSES>
 
-Your task is to synthesize these results into a comprehensive final answer:
+Synthesize these results into a unified, comprehensive response.
 
-**Analysis Steps:**
-1. **Compare Solutions:** Examine what each agent discovered
-2. **Evaluate Rigor:** Which solution(s) have the strongest logical foundation?
-3. **Identify Insights:** Are there complementary insights that can be combined?
-4. **Resolve Conflicts:** If there are contradictions, determine which reasoning is correct
-5. **Synthesize:** Create a final answer that leverages the best from all approaches
+**Your Process:**
+1. **Compare Approaches:** What did each agent discover? What perspectives did they bring?
+2. **Evaluate Quality:** Which analyses are most sound? Most complete? Most practical?
+3. **Find Synergies:** What complementary insights can be combined?
+4. **Resolve Conflicts:** Where agents disagree, determine which reasoning is stronger
+5. **Synthesize:** Create a final answer that takes the best from all approaches
 
-**Output Format:**
-Your response should include:
-1. **Comparison Summary**: Brief comparison of different approaches
-2. **Best Solution Identification**: Which agent(s) produced the most rigorous solution and why
-3. **Synthesis**: Combined insights from multiple agents (if applicable)
-4. **Final Answer**: The definitive, comprehensive answer to the problem
+**Output Structure:**
+1. **Approach Comparison**: Brief overview of what each agent did and found
+2. **Quality Assessment**: Which agent(s) produced the strongest analysis and why
+3. **Integrated Insights**: How different perspectives combine (if they do)
+4. **Final Answer**: The comprehensive, synthesized response to the original task
 
-**Requirements:**
-- Be critical and analytical
-- Favor logical rigor over clever tricks
-- Combine approaches only when they genuinely complement each other
-- Clearly state your final answer`;
+**Synthesis Guidelines:**
+- Be ruthlessly honest about which analyses are actually good
+- Don't force synthesis if one approach is clearly superior
+- Combine insights only when they genuinely complement each other
+- Make your final answer clear and actionable
+- Include practical recommendations when relevant`;
 
 export function buildInitialThinkingPrompt(
   problemStatement: string,
@@ -211,16 +272,16 @@ export function buildInitialThinkingPrompt(
   
   // Add knowledge base context if available
   if (knowledgeContext && knowledgeContext.trim()) {
-    prompt += "\n\n### Available Knowledge Base ###\n\n";
-    prompt += "The following knowledge and resources are available to help you solve this problem:\n\n";
+    prompt += "\n\n### Reference Materials ###\n\n";
+    prompt += "The following context and resources are available for your analysis:\n\n";
     prompt += knowledgeContext;
-    prompt += "\n\n### End of Knowledge Base ###\n";
+    prompt += "\n\n### End of Reference Materials ###\n";
   }
   
   prompt += "\n\n" + problemStatement;
   
   if (otherPrompts.length > 0) {
-    prompt += "\n\n### Additional Instructions ###\n\n";
+    prompt += "\n\n### Additional Context ###\n\n";
     prompt += otherPrompts.join("\n\n");
   }
   return prompt;

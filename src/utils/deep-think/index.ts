@@ -192,7 +192,7 @@ export class DeepThinkEngine {
     if (!goodVerify.toLowerCase().includes("yes")) {
       bugReport = this.extractDetailedSolution(
         verificationOutput,
-        "Detailed Verification",
+        "Detailed Review",
         false
       );
     }
