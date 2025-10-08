@@ -23,6 +23,7 @@ export async function POST(req: NextRequest) {
     problemStatement,
     provider,
     thinkingModel,
+    modelStages, // Optional: Different models for different stages
     otherPrompts = [],
     knowledgeContext,
     maxIterations = 30,
@@ -152,6 +153,7 @@ export async function POST(req: NextRequest) {
             enableWebSearch,
             createModelProvider,
             thinkingModel,
+            modelStages,
             onProgress: handleProgress,
             onAgentUpdate: (agentId: string, update: Partial<AgentResult>) => {
               sendEvent("agent-update", {
@@ -177,6 +179,7 @@ export async function POST(req: NextRequest) {
             enableWebSearch,
             createModelProvider,
             thinkingModel,
+            modelStages,
             onProgress: handleProgress,
           });
         }

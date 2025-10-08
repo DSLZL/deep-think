@@ -53,8 +53,7 @@ export interface SettingStore {
   ollamaThinkingModel: string;
   ollamaNetworkingModel: string;
   accessPassword: string;
-  thinkingModel: string;
-  networkingModel: string;
+  model: string;
   enableSearch: string;
   searchProvider: string;
   tavilyApiKey: string;
@@ -80,6 +79,16 @@ export interface SettingStore {
   smoothTextStreamType: "character" | "word" | "line";
   onlyUseLocalResource: "enable" | "disable";
   useFileFormatResource: "enable" | "disable";
+  // DeepThink / UltraThink 分阶段模型配置
+  enableModelStages: "enable" | "disable";
+  modelStageInitial: string;
+  modelStageImprovement: string;
+  modelStageVerification: string;
+  modelStageCorrection: string;
+  modelStagePlanning: string;
+  modelStageAgentConfig: string;
+  modelStageAgentThinking: string;
+  modelStageSynthesis: string;
 }
 
 interface SettingActions {
@@ -92,8 +101,7 @@ export const defaultValues: SettingStore = {
   mode: "",
   apiKey: "",
   apiProxy: "",
-  thinkingModel: "gemini-2.0-flash-thinking-exp",
-  networkingModel: "gemini-2.0-flash",
+  model: "gemini-2.0-flash-thinking-exp",
   googleVertexProject: "",
   googleVertexLocation: "",
   googleClientEmail: "",
@@ -166,6 +174,16 @@ export const defaultValues: SettingStore = {
   smoothTextStreamType: "word",
   onlyUseLocalResource: "disable",
   useFileFormatResource: "disable",
+  // DeepThink / UltraThink 分阶段模型配置
+  enableModelStages: "disable",
+  modelStageInitial: "",
+  modelStageImprovement: "",
+  modelStageVerification: "",
+  modelStageCorrection: "",
+  modelStagePlanning: "",
+  modelStageAgentConfig: "",
+  modelStageAgentThinking: "",
+  modelStageSynthesis: "",
 };
 
 export const useSettingStore = create(

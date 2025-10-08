@@ -206,91 +206,79 @@ function useModelProvider() {
     return await createAIProvider(options);
   }
 
-  function getModel() {
+  function getModel(): { model: string } {
     const { provider } = useSettingStore.getState();
 
     switch (provider) {
       case "google":
-        const { thinkingModel, networkingModel } = useSettingStore.getState();
-        return { thinkingModel, networkingModel };
+        const { model } = useSettingStore.getState();
+        return { model };
       case "google-vertex":
-        const { googleVertexThinkingModel, googleVertexNetworkingModel } =
+        const { googleVertexThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: googleVertexThinkingModel,
-          networkingModel: googleVertexNetworkingModel,
+          model: googleVertexThinkingModel,
         };
       case "openai":
-        const { openAIThinkingModel, openAINetworkingModel } =
+        const { openAIThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: openAIThinkingModel,
-          networkingModel: openAINetworkingModel,
+          model: openAIThinkingModel,
         };
       case "anthropic":
-        const { anthropicThinkingModel, anthropicNetworkingModel } =
+        const { anthropicThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: anthropicThinkingModel,
-          networkingModel: anthropicNetworkingModel,
+          model: anthropicThinkingModel,
         };
       case "deepseek":
-        const { deepseekThinkingModel, deepseekNetworkingModel } =
+        const { deepseekThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: deepseekThinkingModel,
-          networkingModel: deepseekNetworkingModel,
+          model: deepseekThinkingModel,
         };
       case "xai":
-        const { xAIThinkingModel, xAINetworkingModel } =
+        const { xAIThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: xAIThinkingModel,
-          networkingModel: xAINetworkingModel,
+          model: xAIThinkingModel,
         };
       case "mistral":
-        const { mistralThinkingModel, mistralNetworkingModel } =
+        const { mistralThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: mistralThinkingModel,
-          networkingModel: mistralNetworkingModel,
+          model: mistralThinkingModel,
         };
       case "azure":
-        const { azureThinkingModel, azureNetworkingModel } =
+        const { azureThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: azureThinkingModel,
-          networkingModel: azureNetworkingModel,
+          model: azureThinkingModel,
         };
       case "openrouter":
-        const { openRouterThinkingModel, openRouterNetworkingModel } =
+        const { openRouterThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: openRouterThinkingModel,
-          networkingModel: openRouterNetworkingModel,
+          model: openRouterThinkingModel,
         };
       case "openaicompatible":
         const {
           openAICompatibleThinkingModel,
-          openAICompatibleNetworkingModel,
         } = useSettingStore.getState();
         return {
-          thinkingModel: openAICompatibleThinkingModel,
-          networkingModel: openAICompatibleNetworkingModel,
+          model: openAICompatibleThinkingModel,
         };
       case "pollinations":
-        const { pollinationsThinkingModel, pollinationsNetworkingModel } =
+        const { pollinationsThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: pollinationsThinkingModel,
-          networkingModel: pollinationsNetworkingModel,
+          model: pollinationsThinkingModel,
         };
       case "ollama":
-        const { ollamaThinkingModel, ollamaNetworkingModel } =
+        const { ollamaThinkingModel } =
           useSettingStore.getState();
         return {
-          thinkingModel: ollamaThinkingModel,
-          networkingModel: ollamaNetworkingModel,
+          model: ollamaThinkingModel,
         };
       default:
         throw new Error("Unsupported Provider: " + provider);

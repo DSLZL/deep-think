@@ -90,13 +90,29 @@ function useDeepThinkEngine() {
     knowledgeContext?: string
   ): Promise<DeepThinkResult | null> {
     try {
-      const { thinkingModel } = getModel();
-      const { enableSearch, searchProvider } = useSettingStore.getState();
+      const { model } = getModel();
+      const { 
+        enableSearch, 
+        searchProvider,
+        enableModelStages,
+        modelStageInitial,
+        modelStageImprovement,
+        modelStageVerification,
+        modelStageCorrection,
+      } = useSettingStore.getState();
 
       // 检查模型是否支持网页搜索
       const enableWebSearch = enableSearch && 
         searchProvider === "model" && 
-        isNetworkingModel(thinkingModel);
+        isNetworkingModel(model);
+
+      // 构建分阶段模型配置
+      const modelStages = enableModelStages === "enable" ? {
+        initial: modelStageInitial || undefined,
+        improvement: modelStageImprovement || undefined,
+        verification: modelStageVerification || undefined,
+        correction: modelStageCorrection || undefined,
+      } : undefined;
 
       const result = await runDeepThink({
         problemStatement,
@@ -105,7 +121,8 @@ function useDeepThinkEngine() {
         enableWebSearch: enableWebSearch || undefined,
         searchProvider: enableWebSearch ? { provider: "model", maxResult: 5 } : undefined,
         createModelProvider,
-        thinkingModel,
+        thinkingModel: model,
+        modelStages,
         onProgress: handleProgress,
       });
 
@@ -123,14 +140,38 @@ function useDeepThinkEngine() {
     knowledgeContext?: string
   ): Promise<UltraThinkResult | null> {
     try {
-      const { thinkingModel } = getModel();
+      const { model } = getModel();
       const { setAgentResults, updateAgentResult } = useGlobalStore.getState();
-      const { enableSearch, searchProvider } = useSettingStore.getState();
+      const { 
+        enableSearch, 
+        searchProvider,
+        enableModelStages,
+        modelStageInitial,
+        modelStageImprovement,
+        modelStageVerification,
+        modelStageCorrection,
+        modelStagePlanning,
+        modelStageAgentConfig,
+        modelStageAgentThinking,
+        modelStageSynthesis,
+      } = useSettingStore.getState();
 
       // 检查模型是否支持网页搜索
       const enableWebSearch = enableSearch && 
         searchProvider === "model" && 
-        isNetworkingModel(thinkingModel);
+        isNetworkingModel(model);
+
+      // 构建分阶段模型配置
+      const modelStages = enableModelStages === "enable" ? {
+        initial: modelStageInitial || undefined,
+        improvement: modelStageImprovement || undefined,
+        verification: modelStageVerification || undefined,
+        correction: modelStageCorrection || undefined,
+        planning: modelStagePlanning || undefined,
+        agentConfig: modelStageAgentConfig || undefined,
+        agentThinking: modelStageAgentThinking || undefined,
+        synthesis: modelStageSynthesis || undefined,
+      } : undefined;
 
       // 初始化 agents - 如果指定了 numAgents，预先创建占位符
       if (numAgents) {
@@ -158,7 +199,8 @@ function useDeepThinkEngine() {
         searchProvider: enableWebSearch ? { provider: "model", maxResult: 5 } : undefined,
         numAgents, // Can be undefined - LLM will decide
         createModelProvider,
-        thinkingModel,
+        thinkingModel: model,
+        modelStages,
         onProgress: handleProgress,
         onAgentUpdate: (agentId: string, update: Partial<AgentResult>) => {
           updateAgentResult(agentId, update);

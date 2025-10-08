@@ -32,6 +32,18 @@ interface ThinkAPIRequest {
   // Required: Model for thinking
   thinkingModel: string;
   
+  // Optional: Different models for different stages
+  modelStages?: {
+    initial?: string;           // Initial thinking stage
+    improvement?: string;       // Self-improvement stage
+    verification?: string;      // Verification stage (use cheaper model here)
+    correction?: string;        // Correction stage
+    planning?: string;          // UltraThink: Planning stage
+    agentConfig?: string;       // UltraThink: Agent config generation
+    agentThinking?: string;     // UltraThink: Agent parallel thinking
+    synthesis?: string;         // UltraThink: Result synthesis
+  };
+  
   // Optional: Additional prompts/constraints
   otherPrompts?: string[];
   
@@ -449,6 +461,85 @@ fetchEventSource("http://localhost:3000/api/sse/think", {
 });
 ```
 
+### Using Different Models for Different Stages
+
+You can optimize costs by using cheaper models for verification stages while using powerful models for critical thinking:
+
+```typescript
+import { fetchEventSource } from "@microsoft/fetch-event-source";
+
+const ctrl = new AbortController();
+
+fetchEventSource("http://localhost:3000/api/sse/think", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    mode: "deep-think",
+    problemStatement: "Prove that the square root of 2 is irrational",
+    provider: "openai",
+    thinkingModel: "gpt-4o",  // Default model for all stages
+    // Override specific stages with different models
+    modelStages: {
+      initial: "gpt-4o",           // Use powerful model for initial thinking
+      improvement: "gpt-4o",       // Use powerful model for improvement
+      verification: "gpt-4o-mini", // Use cheaper model for verification (saves money!)
+      correction: "gpt-4o",        // Use powerful model when correcting errors
+    },
+    maxIterations: 30,
+    requiredSuccessfulVerifications: 3,
+  }),
+  signal: ctrl.signal,
+  
+  onmessage(msg) {
+    const data = JSON.parse(msg.data);
+    
+    if (msg.event === "progress") {
+      console.log(`[${data.type}] ${data.message}`);
+    }
+    else if (msg.event === "result") {
+      console.log("Final Result:", data);
+    }
+  },
+  
+  onclose() {
+    console.log("Connection closed");
+  },
+  
+  onerror(err) {
+    console.error("Connection error:", err);
+    throw err;
+  }
+});
+```
+
+**For UltraThink mode**, you can also configure models for additional stages:
+
+```typescript
+body: JSON.stringify({
+  mode: "ultra-think",
+  problemStatement: "Design a distributed consensus algorithm",
+  provider: "openai",
+  thinkingModel: "gpt-4o",
+  modelStages: {
+    // DeepThink stages (used by each agent)
+    verification: "gpt-4o-mini",    // Cheaper model for verification
+    // UltraThink-specific stages
+    planning: "gpt-4o",              // Planning the multi-agent approach
+    agentConfig: "gpt-4o-mini",      // Generating agent configurations
+    agentThinking: "gpt-4o",         // Each agent's deep thinking
+    synthesis: "gpt-4o",             // Synthesizing all agent results
+  },
+  numAgents: 5,
+})
+```
+
+**Cost Optimization Tips:**
+- Verification happens frequently → use cheaper models (e.g., `gpt-4o-mini`, `gemini-flash`)
+- Agent config generation is lightweight → use cheaper models
+- Critical thinking & synthesis → use powerful models
+
 ## Supported Providers
 
 ```
@@ -483,7 +574,12 @@ Clients should always listen for the `error` event. Upon receiving an error, the
    - `requiredSuccessfulVerifications: 3` is recommended for rigorous verification
    - `numAgents: 3-10` for ultra-think mode
 
-3. **Monitor progress**: Listen to `progress` and `solution` events to understand the thinking process
+3. **Optimize costs with `modelStages`**:
+   - Use cheaper models for verification stages (e.g., `gpt-4o-mini`, `gemini-flash`)
+   - Verification happens in every iteration, so this can save significant costs
+   - Keep powerful models for critical thinking stages
+
+4. **Monitor progress**: Listen to `progress` and `solution` events to understand the thinking process
 
 4. **Handle long-running tasks**: Deep Think can take several minutes, ensure proper timeout settings
 

@@ -41,10 +41,10 @@ function KnowledgeGraph({ open, onClose }: Props) {
 
   const generateKnowledgeGraph = useCallback(async () => {
     const { finalReport, updateKnowledgeGraph } = useTaskStore.getState();
-    const { thinkingModel } = getModel();
+    const { model } = getModel();
     setLoading(true);
     const result = streamText({
-      model: await createModelProvider(thinkingModel),
+      model: await createModelProvider(model),
       system:
         knowledgeGraphPrompt +
         `\n\n**The node text uses the same language as the article**`,

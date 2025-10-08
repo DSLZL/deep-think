@@ -74,13 +74,13 @@ function useKnowledge() {
     }
 
     async function extractText(rid: string, title: string, text: string) {
-      const { networkingModel } = getModel();
+      const { model } = getModel();
 
       let content = "";
       let reasoning = "";
       const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
       const result = streamText({
-        model: await createModelProvider(networkingModel),
+        model: await createModelProvider(model),
         prompt: text,
         system: rewritingPrompt,
         onFinish: () => {
@@ -261,12 +261,12 @@ function useKnowledge() {
             status: "completed",
           });
         } else if (crawler === "local") {
-          const { networkingModel } = getModel();
+          const { model } = getModel();
           const { accessPassword } = useSettingStore.getState();
           const result = await localCrawler(url, accessPassword);
           let content = "";
           const stream = streamText({
-            model: await createModelProvider(networkingModel),
+            model: await createModelProvider(model),
             prompt: result.content,
             system: rewritingPrompt,
             onFinish: () => {

@@ -137,10 +137,10 @@ function useDeepResearch() {
 
   async function askQuestions() {
     const { question } = useTaskStore.getState();
-    const { thinkingModel } = getModel();
+    const { model } = getModel();
     setStatus(t("research.common.thinking"));
     const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
-    const searchSettings = await generateSearchSettings(thinkingModel);
+    const searchSettings = await generateSearchSettings(model);
     const result = streamText({
       ...searchSettings,
       system: getSystemPrompt(),
@@ -175,10 +175,10 @@ function useDeepResearch() {
 
   async function writeReportPlan() {
     const { query } = useTaskStore.getState();
-    const { thinkingModel } = getModel();
+    const { model } = getModel();
     setStatus(t("research.common.thinking"));
     const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
-    const searchSettings = await generateSearchSettings(thinkingModel);
+    const searchSettings = await generateSearchSettings(model);
     const result = streamText({
       ...searchSettings,
       system: getSystemPrompt(),
@@ -224,10 +224,10 @@ function useDeepResearch() {
       }
     }
 
-    const { networkingModel } = getModel();
+    const { model } = getModel();
     const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
     const searchResult = streamText({
-      model: await createModelProvider(networkingModel),
+      model: await createModelProvider(model),
       system: getSystemPrompt(),
       prompt: [
         processSearchKnowledgeResultPrompt(query, researchGoal, knowledges),
@@ -267,7 +267,7 @@ function useDeepResearch() {
       onlyUseLocalResource,
     } = useSettingStore.getState();
     const { resources } = useTaskStore.getState();
-    const { networkingModel } = getModel();
+    const { model: networkingModel } = getModel();
     setStatus(t("research.common.research"));
     const plimit = Plimit(parallelSearch);
     const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
@@ -452,12 +452,12 @@ function useDeepResearch() {
 
   async function reviewSearchResult() {
     const { reportPlan, tasks, suggestion } = useTaskStore.getState();
-    const { thinkingModel } = getModel();
+    const { model } = getModel();
     setStatus(t("research.common.research"));
     const learnings = tasks.map((item) => item.learning);
     const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
     const result = streamText({
-      model: await createModelProvider(thinkingModel),
+      model: await createModelProvider(model),
       system: getSystemPrompt(),
       prompt: [
         reviewSerpQueriesPrompt(reportPlan, learnings, suggestion),
@@ -519,7 +519,7 @@ function useDeepResearch() {
       updateFinalReport,
     } = useTaskStore.getState();
     const { save } = useHistoryStore.getState();
-    const { thinkingModel } = getModel();
+    const { model } = getModel();
     setStatus(t("research.common.writing"));
     updateFinalReport("");
     setTitle("");
@@ -596,7 +596,7 @@ function useDeepResearch() {
     }
 
     const result = streamText({
-      model: await createModelProvider(thinkingModel),
+      model: await createModelProvider(model),
       system: [getSystemPrompt(), outputGuidelinesPrompt].join("\n\n"),
       messages: [
         {
@@ -658,12 +658,12 @@ function useDeepResearch() {
 
   async function deepResearch() {
     const { reportPlan } = useTaskStore.getState();
-    const { thinkingModel } = getModel();
+    const { model } = getModel();
     setStatus(t("research.common.thinking"));
     try {
       const thinkTagStreamProcessor = new ThinkTagStreamProcessor();
       const result = streamText({
-        model: await createModelProvider(thinkingModel),
+        model: await createModelProvider(model),
         system: getSystemPrompt(),
         prompt: [
           generateSerpQueriesPrompt(reportPlan),

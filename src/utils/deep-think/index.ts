@@ -16,6 +16,25 @@ import {
 type ProviderOptions = Record<string, Record<string, JSONValue>>;
 type Tools = Record<string, Tool>;
 
+export interface ModelStageConfig {
+  /** 初始思考阶段的模型 */
+  initial?: string;
+  /** 自我改进阶段的模型 */
+  improvement?: string;
+  /** 验证阶段的模型 */
+  verification?: string;
+  /** 修正阶段的模型 */
+  correction?: string;
+  /** UltraThink: 生成计划阶段的模型 */
+  planning?: string;
+  /** UltraThink: 生成agent配置阶段的模型 */
+  agentConfig?: string;
+  /** UltraThink: agent思考阶段的模型 */
+  agentThinking?: string;
+  /** UltraThink: 合成结果阶段的模型 */
+  synthesis?: string;
+}
+
 export interface DeepThinkOptions {
   problemStatement: string;
   otherPrompts?: string[];
@@ -32,6 +51,8 @@ export interface DeepThinkOptions {
   createModelProvider: (model: string, options?: any) => Promise<any>;
   thinkingModel: string;
   taskModel?: string;
+  /** 分阶段模型配置，未指定的阶段使用 thinkingModel */
+  modelStages?: ModelStageConfig;
 }
 
 export type DeepThinkProgressEvent =
@@ -61,6 +82,14 @@ export class DeepThinkEngine {
     if (this.options.onProgress) {
       this.options.onProgress(event);
     }
+  }
+
+  /**
+   * 获取指定阶段应该使用的模型
+   * 如果该阶段没有配置特定模型，则使用默认的 thinkingModel
+   */
+  private getModelForStage(stage: keyof ModelStageConfig): string {
+    return this.options.modelStages?.[stage] || this.options.thinkingModel;
   }
 
   private async getSearchTools(): Promise<Tools | undefined> {
@@ -136,9 +165,9 @@ export class DeepThinkEngine {
 
     this.emit({ type: "progress", data: { message: "Verifying solution..." } });
 
-    const model = await this.options.createModelProvider(
-      this.options.thinkingModel
-    );
+    // 使用验证阶段的模型
+    const verificationModel = this.getModelForStage("verification");
+    const model = await this.options.createModelProvider(verificationModel);
 
     // Get verification
     const verificationResult = await generateText({
@@ -183,9 +212,9 @@ export class DeepThinkEngine {
       data: { iteration: 0, phase: "initial-exploration" },
     });
 
-    const model = await this.options.createModelProvider(
-      this.options.thinkingModel
-    );
+    // 使用初始思考阶段的模型
+    const initialModel = this.getModelForStage("initial");
+    const model = await this.options.createModelProvider(initialModel);
 
     const fullPrompt = buildInitialThinkingPrompt(
       problemStatement,
@@ -213,6 +242,10 @@ export class DeepThinkEngine {
       data: { iteration: 0, phase: "self-improvement" },
     });
 
+    // 使用自我改进阶段的模型
+    const improvementModel = this.getModelForStage("improvement");
+    const improvementModelProvider = await this.options.createModelProvider(improvementModel);
+
     const systemPromptWithKnowledge = this.options.knowledgeContext
       ? deepThinkInitialPrompt +
         "\n\n### Available Knowledge Base ###\n\n" +
@@ -221,7 +254,7 @@ export class DeepThinkEngine {
       : deepThinkInitialPrompt;
 
     const improvementResult = await generateText({
-      model,
+      model: improvementModelProvider,
       system: systemPromptWithKnowledge,
       messages: [
         { role: "user", content: problemStatement },
@@ -313,9 +346,9 @@ export class DeepThinkEngine {
         // Correction
         this.emit({ type: "correction", data: { iteration: i } });
 
-        const model = await this.options.createModelProvider(
-          this.options.thinkingModel
-        );
+        // 使用修正阶段的模型
+        const correctionModel = this.getModelForStage("correction");
+        const model = await this.options.createModelProvider(correctionModel);
 
         const systemPromptWithKnowledge = this.options.knowledgeContext
           ? deepThinkInitialPrompt +
@@ -424,6 +457,14 @@ export class UltraThinkEngine {
     }
   }
 
+  /**
+   * 获取指定阶段应该使用的模型
+   * 如果该阶段没有配置特定模型，则使用默认的 thinkingModel
+   */
+  private getModelForStage(stage: keyof ModelStageConfig): string {
+    return this.options.modelStages?.[stage] || this.options.thinkingModel;
+  }
+
   private async getSearchTools(): Promise<Tools | undefined> {
     if (!this.options.enableWebSearch) return undefined;
 
@@ -475,9 +516,9 @@ export class UltraThinkEngine {
       data: { message: "Generating thinking plan..." },
     });
 
-    const model = await this.options.createModelProvider(
-      this.options.thinkingModel
-    );
+    // 使用计划阶段的模型
+    const planningModel = this.getModelForStage("planning");
+    const model = await this.options.createModelProvider(planningModel);
 
     const result = await generateText({
       model,
@@ -495,9 +536,9 @@ export class UltraThinkEngine {
       data: { message: "Generating agent configurations..." },
     });
 
-    const model = await this.options.createModelProvider(
-      this.options.thinkingModel
-    );
+    // 使用agent配置阶段的模型
+    const agentConfigModel = this.getModelForStage("agentConfig");
+    const model = await this.options.createModelProvider(agentConfigModel);
 
     // Use generateObject for structured output instead of manual JSON parsing
     const agentConfigSchema = z.object({
@@ -574,8 +615,13 @@ export class UltraThinkEngine {
     }
 
     try {
+      // Agent思考阶段可以使用专门的模型，或者继承各个阶段的配置
+      const agentThinkingModel = this.getModelForStage("agentThinking");
+      
       const engine = new DeepThinkEngine({
         ...this.options,
+        // 如果设置了agentThinking模型，则覆盖thinkingModel
+        thinkingModel: agentThinkingModel,
         problemStatement,
         otherPrompts: [config.specificPrompt],
         onProgress: (event) => {
@@ -698,9 +744,9 @@ ${result.solution || "No solution generated"}
       })
       .join("\n\n---\n\n");
 
-    const model = await this.options.createModelProvider(
-      this.options.thinkingModel
-    );
+    // 使用合成阶段的模型
+    const synthesisModel = this.getModelForStage("synthesis");
+    const model = await this.options.createModelProvider(synthesisModel);
 
     const synthesisResult = await generateText({
       model,

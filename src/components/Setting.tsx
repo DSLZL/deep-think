@@ -70,10 +70,8 @@ import {
 import locales from "@/constants/locales";
 import {
   filterThinkingModelList,
-  filterNetworkingModelList,
   filterOpenRouterModelList,
   filterDeepSeekModelList,
-  filterOpenAIModelList,
   filterMistralModelList,
   filterPollinationsModelList,
   getCustomModelList,
@@ -99,8 +97,7 @@ const formSchema = z.object({
   mode: z.string().optional(),
   apiKey: z.string().optional(),
   apiProxy: z.string().optional(),
-  thinkingModel: z.string().optional(),
-  networkingModel: z.string().optional(),
+  model: z.string().optional(),
   googleVertexProject: z.string().optional(),
   googleVertexLocation: z.string().optional(),
   googleClientEmail: z.string().optional(),
@@ -172,6 +169,15 @@ const formSchema = z.object({
   smoothTextStreamType: z.enum(["character", "word", "line"]).optional(),
   onlyUseLocalResource: z.enum(["enable", "disable"]).optional(),
   useFileFormatResource: z.enum(["enable", "disable"]).optional(),
+  enableModelStages: z.enum(["enable", "disable"]).optional(),
+  modelStageInitial: z.string().optional(),
+  modelStageImprovement: z.string().optional(),
+  modelStageVerification: z.string().optional(),
+  modelStageCorrection: z.string().optional(),
+  modelStagePlanning: z.string().optional(),
+  modelStageAgentConfig: z.string().optional(),
+  modelStageAgentThinking: z.string().optional(),
+  modelStageSynthesis: z.string().optional(),
 });
 
 function convertModelName(name: string) {
@@ -232,21 +238,6 @@ function Setting({ open, onClose }: SettingProps) {
       return filterOpenRouterModelList(modelList);
     } else if (provider === "deepseek") {
       return filterDeepSeekModelList(modelList);
-    } else if (provider === "mistral") {
-      return filterMistralModelList(modelList);
-    } else if (provider === "pollinations") {
-      return filterPollinationsModelList(modelList);
-    }
-    return [[], modelList];
-  }, [modelList]);
-  const networkingModelList = useMemo(() => {
-    const { provider } = useSettingStore.getState();
-    if (provider === "google") {
-      return filterNetworkingModelList(modelList);
-    } else if (provider === "openrouter") {
-      return filterOpenRouterModelList(modelList);
-    } else if (provider === "openai") {
-      return filterOpenAIModelList(modelList);
     } else if (provider === "mistral") {
       return filterMistralModelList(modelList);
     } else if (provider === "pollinations") {
@@ -1277,12 +1268,12 @@ function Setting({ open, onClose }: SettingProps) {
                 >
                   <FormField
                     control={form.control}
-                    name="thinkingModel"
+                    name="model"
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -1325,90 +1316,6 @@ function Setting({ open, onClose }: SettingProps) {
                                     {t("setting.basicModels")}
                                   </SelectLabel>
                                   {thinkingModelList[1].map((name) => {
-                                    return !isDisabledAIModel(name) ? (
-                                      <SelectItem key={name} value={name}>
-                                        {convertModelName(name)}
-                                      </SelectItem>
-                                    ) : null;
-                                  })}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              className={cn("w-full", {
-                                hidden: modelList.length > 0,
-                              })}
-                              type="button"
-                              variant="outline"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              {isRefreshing ? (
-                                <>
-                                  <RefreshCw className="animate-spin" />{" "}
-                                  {t("setting.modelListLoading")}
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw /> {t("setting.refresh")}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="networkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger
-                                className={cn({
-                                  hidden: modelList.length === 0,
-                                })}
-                              >
-                                <SelectValue
-                                  placeholder={t(
-                                    "setting.modelListLoadingPlaceholder"
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-sm:max-h-72">
-                                {networkingModelList[0].length > 0 ? (
-                                  <SelectGroup>
-                                    <SelectLabel>
-                                      {t("setting.recommendedModels")}
-                                    </SelectLabel>
-                                    {networkingModelList[0].map((name) => {
-                                      return !isDisabledAIModel(name) ? (
-                                        <SelectItem key={name} value={name}>
-                                          {convertModelName(name)}
-                                        </SelectItem>
-                                      ) : null;
-                                    })}
-                                  </SelectGroup>
-                                ) : null}
-                                <SelectGroup>
-                                  <SelectLabel>
-                                    {t("setting.basicModels")}
-                                  </SelectLabel>
-                                  {networkingModelList[1].map((name) => {
                                     return !isDisabledAIModel(name) ? (
                                       <SelectItem key={name} value={name}>
                                         {convertModelName(name)}
@@ -1455,8 +1362,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -1499,90 +1406,6 @@ function Setting({ open, onClose }: SettingProps) {
                                     {t("setting.basicModels")}
                                   </SelectLabel>
                                   {thinkingModelList[1].map((name) => {
-                                    return !isDisabledAIModel(name) ? (
-                                      <SelectItem key={name} value={name}>
-                                        {convertModelName(name)}
-                                      </SelectItem>
-                                    ) : null;
-                                  })}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              className={cn("w-full", {
-                                hidden: modelList.length > 0,
-                              })}
-                              type="button"
-                              variant="outline"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              {isRefreshing ? (
-                                <>
-                                  <RefreshCw className="animate-spin" />{" "}
-                                  {t("setting.modelListLoading")}
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw /> {t("setting.refresh")}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="openRouterNetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger
-                                className={cn({
-                                  hidden: modelList.length === 0,
-                                })}
-                              >
-                                <SelectValue
-                                  placeholder={t(
-                                    "setting.modelListLoadingPlaceholder"
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-sm:max-h-72">
-                                {networkingModelList[0].length > 0 ? (
-                                  <SelectGroup>
-                                    <SelectLabel>
-                                      {t("setting.recommendedModels")}
-                                    </SelectLabel>
-                                    {networkingModelList[0].map((name) => {
-                                      return !isDisabledAIModel(name) ? (
-                                        <SelectItem key={name} value={name}>
-                                          {convertModelName(name)}
-                                        </SelectItem>
-                                      ) : null;
-                                    })}
-                                  </SelectGroup>
-                                ) : null}
-                                <SelectGroup>
-                                  <SelectLabel>
-                                    {t("setting.basicModels")}
-                                  </SelectLabel>
-                                  {networkingModelList[1].map((name) => {
                                     return !isDisabledAIModel(name) ? (
                                       <SelectItem key={name} value={name}>
                                         {convertModelName(name)}
@@ -1629,33 +1452,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Input
-                              placeholder={t("setting.modelListPlaceholder")}
-                              value={field.value}
-                              onChange={field.onChange}
-                            />
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="googleVertexNetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -1685,8 +1483,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -1763,90 +1561,6 @@ function Setting({ open, onClose }: SettingProps) {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="openAINetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger
-                                className={cn({
-                                  hidden: modelList.length === 0,
-                                })}
-                              >
-                                <SelectValue
-                                  placeholder={t(
-                                    "setting.modelListLoadingPlaceholder"
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-sm:max-h-72">
-                                {networkingModelList[0].length > 0 ? (
-                                  <SelectGroup>
-                                    <SelectLabel>
-                                      {t("setting.recommendedModels")}
-                                    </SelectLabel>
-                                    {networkingModelList[0].map((name) => {
-                                      return !isDisabledAIModel(name) ? (
-                                        <SelectItem key={name} value={name}>
-                                          {convertModelName(name)}
-                                        </SelectItem>
-                                      ) : null;
-                                    })}
-                                  </SelectGroup>
-                                ) : null}
-                                <SelectGroup>
-                                  <SelectLabel>
-                                    {t("setting.basicModels")}
-                                  </SelectLabel>
-                                  {networkingModelList[1].map((name) => {
-                                    return !isDisabledAIModel(name) ? (
-                                      <SelectItem key={name} value={name}>
-                                        {convertModelName(name)}
-                                      </SelectItem>
-                                    ) : null;
-                                  })}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              className={cn("w-full", {
-                                hidden: modelList.length > 0,
-                              })}
-                              type="button"
-                              variant="outline"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              {isRefreshing ? (
-                                <>
-                                  <RefreshCw className="animate-spin" />{" "}
-                                  {t("setting.modelListLoading")}
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw /> {t("setting.refresh")}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
                 </div>
                 <div
                   className={cn("space-y-4", {
@@ -1859,73 +1573,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger
-                                className={cn({
-                                  hidden: modelList.length === 0,
-                                })}
-                              >
-                                <SelectValue
-                                  placeholder={t(
-                                    "setting.modelListLoadingPlaceholder"
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-sm:max-h-72">
-                                {modelList.map((name) => {
-                                  return !isDisabledAIModel(name) ? (
-                                    <SelectItem key={name} value={name}>
-                                      {convertModelName(name)}
-                                    </SelectItem>
-                                  ) : null;
-                                })}
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              className={cn("w-full", {
-                                hidden: modelList.length > 0,
-                              })}
-                              type="button"
-                              variant="outline"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              {isRefreshing ? (
-                                <>
-                                  <RefreshCw className="animate-spin" />{" "}
-                                  {t("setting.modelListLoading")}
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw /> {t("setting.refresh")}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="anthropicNetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -1995,8 +1644,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -2073,90 +1722,6 @@ function Setting({ open, onClose }: SettingProps) {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="deepseekNetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger
-                                className={cn({
-                                  hidden: modelList.length === 0,
-                                })}
-                              >
-                                <SelectValue
-                                  placeholder={t(
-                                    "setting.modelListLoadingPlaceholder"
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-sm:max-h-72">
-                                {networkingModelList[0].length > 0 ? (
-                                  <SelectGroup>
-                                    <SelectLabel>
-                                      {t("setting.recommendedModels")}
-                                    </SelectLabel>
-                                    {networkingModelList[0].map((name) => {
-                                      return !isDisabledAIModel(name) ? (
-                                        <SelectItem key={name} value={name}>
-                                          {convertModelName(name)}
-                                        </SelectItem>
-                                      ) : null;
-                                    })}
-                                  </SelectGroup>
-                                ) : null}
-                                <SelectGroup>
-                                  <SelectLabel>
-                                    {t("setting.basicModels")}
-                                  </SelectLabel>
-                                  {networkingModelList[1].map((name) => {
-                                    return !isDisabledAIModel(name) ? (
-                                      <SelectItem key={name} value={name}>
-                                        {convertModelName(name)}
-                                      </SelectItem>
-                                    ) : null;
-                                  })}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              className={cn("w-full", {
-                                hidden: modelList.length > 0,
-                              })}
-                              type="button"
-                              variant="outline"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              {isRefreshing ? (
-                                <>
-                                  <RefreshCw className="animate-spin" />{" "}
-                                  {t("setting.modelListLoading")}
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw /> {t("setting.refresh")}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
                 </div>
                 <div
                   className={cn("space-y-4", {
@@ -2169,73 +1734,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger
-                                className={cn({
-                                  hidden: modelList.length === 0,
-                                })}
-                              >
-                                <SelectValue
-                                  placeholder={t(
-                                    "setting.modelListLoadingPlaceholder"
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-sm:max-h-72">
-                                {modelList.map((name) => {
-                                  return !isDisabledAIModel(name) ? (
-                                    <SelectItem key={name} value={name}>
-                                      {convertModelName(name)}
-                                    </SelectItem>
-                                  ) : null;
-                                })}
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              className={cn("w-full", {
-                                hidden: modelList.length > 0,
-                              })}
-                              type="button"
-                              variant="outline"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              {isRefreshing ? (
-                                <>
-                                  <RefreshCw className="animate-spin" />{" "}
-                                  {t("setting.modelListLoading")}
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw /> {t("setting.refresh")}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="xAINetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -2305,8 +1805,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -2383,90 +1883,6 @@ function Setting({ open, onClose }: SettingProps) {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="mistralNetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger
-                                className={cn({
-                                  hidden: modelList.length === 0,
-                                })}
-                              >
-                                <SelectValue
-                                  placeholder={t(
-                                    "setting.modelListLoadingPlaceholder"
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-sm:max-h-72">
-                                {networkingModelList[0].length > 0 ? (
-                                  <SelectGroup>
-                                    <SelectLabel>
-                                      {t("setting.recommendedModels")}
-                                    </SelectLabel>
-                                    {networkingModelList[0].map((name) => {
-                                      return !isDisabledAIModel(name) ? (
-                                        <SelectItem key={name} value={name}>
-                                          {convertModelName(name)}
-                                        </SelectItem>
-                                      ) : null;
-                                    })}
-                                  </SelectGroup>
-                                ) : null}
-                                <SelectGroup>
-                                  <SelectLabel>
-                                    {t("setting.basicModels")}
-                                  </SelectLabel>
-                                  {networkingModelList[1].map((name) => {
-                                    return !isDisabledAIModel(name) ? (
-                                      <SelectItem key={name} value={name}>
-                                        {convertModelName(name)}
-                                      </SelectItem>
-                                    ) : null;
-                                  })}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              className={cn("w-full", {
-                                hidden: modelList.length > 0,
-                              })}
-                              type="button"
-                              variant="outline"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              {isRefreshing ? (
-                                <>
-                                  <RefreshCw className="animate-spin" />{" "}
-                                  {t("setting.modelListLoading")}
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw /> {t("setting.refresh")}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
                 </div>
                 <div
                   className={cn("space-y-4", {
@@ -2479,32 +1895,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Input
-                              placeholder={t("setting.modelListPlaceholder")}
-                              {...field}
-                            />
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="azureNetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -2533,8 +1925,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -2542,71 +1934,6 @@ function Setting({ open, onClose }: SettingProps) {
                         </FormLabel>
                         <FormControl>
                           <div className="form-field flex gap-2">
-                            <Input
-                              className={cn("flex-1", {
-                                hidden: modelList.length > 0,
-                              })}
-                              placeholder={t("setting.modelListPlaceholder")}
-                              {...field}
-                            />
-                            <div
-                              className={cn("flex-1", {
-                                hidden: modelList.length === 0,
-                              })}
-                            >
-                              <Select
-                                defaultValue={field.value}
-                                onValueChange={field.onChange}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={t(
-                                      "setting.modelListLoadingPlaceholder"
-                                    )}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent className="max-sm:max-h-72">
-                                  {modelList.map((name) => {
-                                    return !isDisabledAIModel(name) ? (
-                                      <SelectItem key={name} value={name}>
-                                        {convertModelName(name)}
-                                      </SelectItem>
-                                    ) : null;
-                                  })}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              <RefreshCw
-                                className={isRefreshing ? "animate-spin" : ""}
-                              />
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="openAICompatibleNetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full flex gap-2">
                             <Input
                               className={cn("flex-1", {
                                 hidden: modelList.length > 0,
@@ -2669,8 +1996,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -2747,90 +2074,6 @@ function Setting({ open, onClose }: SettingProps) {
                       </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name="pollinationsNetworkingModel"
-                    render={({ field }) => (
-                      <FormItem className="from-item">
-                        <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
-                          </HelpTip>
-                        </FormLabel>
-                        <FormControl>
-                          <div className="form-field w-full">
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger
-                                className={cn({
-                                  hidden: modelList.length === 0,
-                                })}
-                              >
-                                <SelectValue
-                                  placeholder={t(
-                                    "setting.modelListLoadingPlaceholder"
-                                  )}
-                                />
-                              </SelectTrigger>
-                              <SelectContent className="max-sm:max-h-72">
-                                {networkingModelList[0].length > 0 ? (
-                                  <SelectGroup>
-                                    <SelectLabel>
-                                      {t("setting.recommendedModels")}
-                                    </SelectLabel>
-                                    {networkingModelList[0].map((name) => {
-                                      return !isDisabledAIModel(name) ? (
-                                        <SelectItem key={name} value={name}>
-                                          {convertModelName(name)}
-                                        </SelectItem>
-                                      ) : null;
-                                    })}
-                                  </SelectGroup>
-                                ) : null}
-                                <SelectGroup>
-                                  <SelectLabel>
-                                    {t("setting.basicModels")}
-                                  </SelectLabel>
-                                  {networkingModelList[1].map((name) => {
-                                    return !isDisabledAIModel(name) ? (
-                                      <SelectItem key={name} value={name}>
-                                        {convertModelName(name)}
-                                      </SelectItem>
-                                    ) : null;
-                                  })}
-                                </SelectGroup>
-                              </SelectContent>
-                            </Select>
-                            <Button
-                              className={cn("w-full", {
-                                hidden: modelList.length > 0,
-                              })}
-                              type="button"
-                              variant="outline"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              {isRefreshing ? (
-                                <>
-                                  <RefreshCw className="animate-spin" />{" "}
-                                  {t("setting.modelListLoading")}
-                                </>
-                              ) : (
-                                <>
-                                  <RefreshCw /> {t("setting.refresh")}
-                                </>
-                              )}
-                            </Button>
-                          </div>
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
                 </div>
                 <div
                   className={cn("space-y-4", {
@@ -2843,8 +2086,8 @@ function Setting({ open, onClose }: SettingProps) {
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.thinkingModelTip")}>
-                            {t("setting.thinkingModel")}
+                          <HelpTip tip="选择用于思考和推理的模型">
+                            模型
                             <span className="ml-1 text-red-500 max-sm:hidden">
                               *
                             </span>
@@ -2902,71 +2145,148 @@ function Setting({ open, onClose }: SettingProps) {
                       </FormItem>
                     )}
                   />
+                </div>
+                {/* 分阶段模型配置 - 适用于所有 provider */}
+                <div className="border-t pt-4 mt-4">
                   <FormField
                     control={form.control}
-                    name="ollamaNetworkingModel"
+                    name="enableModelStages"
                     render={({ field }) => (
                       <FormItem className="from-item">
                         <FormLabel className="from-label">
-                          <HelpTip tip={t("setting.networkingModelTip")}>
-                            {t("setting.networkingModel")}
-                            <span className="ml-1 text-red-500 max-sm:hidden">
-                              *
-                            </span>
+                          <HelpTip tip="为 DeepThink/UltraThink 不同阶段使用不同模型。验证阶段用便宜模型就够了。">
+                            分阶段模型配置
                           </HelpTip>
                         </FormLabel>
                         <FormControl>
-                          <div className="form-field w-full flex gap-2">
-                            <Input
-                              className={cn("flex-1", {
-                                hidden: modelList.length > 0,
-                              })}
-                              placeholder={t("setting.modelListPlaceholder")}
-                              {...field}
-                            />
-                            <div
-                              className={cn("flex-1", {
-                                hidden: modelList.length === 0,
-                              })}
-                            >
-                              <Select
-                                defaultValue={field.value}
-                                onValueChange={field.onChange}
-                              >
-                                <SelectTrigger>
-                                  <SelectValue
-                                    placeholder={t(
-                                      "setting.modelListLoadingPlaceholder"
-                                    )}
-                                  />
-                                </SelectTrigger>
-                                <SelectContent className="max-sm:max-h-72">
-                                  {modelList.map((name) => {
-                                    return !isDisabledAIModel(name) ? (
-                                      <SelectItem key={name} value={name}>
-                                        {convertModelName(name)}
-                                      </SelectItem>
-                                    ) : null;
-                                  })}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="icon"
-                              disabled={isRefreshing}
-                              onClick={() => fetchModelList()}
-                            >
-                              <RefreshCw
-                                className={isRefreshing ? "animate-spin" : ""}
-                              />
-                            </Button>
-                          </div>
+                          <Select {...field} onValueChange={field.onChange}>
+                            <SelectTrigger className="form-field">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="enable">
+                                启用
+                              </SelectItem>
+                              <SelectItem value="disable">
+                                禁用
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                       </FormItem>
                     )}
                   />
+                  {form.watch("enableModelStages") === "enable" && (
+                    <div className="space-y-4 mt-4 pl-4 border-l-2">
+                      {[
+                        { name: "modelStageInitial", label: "初始思考", tip: "初始思考阶段的模型。留空使用默认模型。" },
+                        { name: "modelStageImprovement", label: "改进阶段", tip: "自我改进阶段的模型。留空使用默认模型。" },
+                        { name: "modelStageVerification", label: "验证阶段", tip: "验证阶段的模型。建议用便宜模型，比如 gpt-4o-mini。" },
+                        { name: "modelStageCorrection", label: "修正阶段", tip: "修正错误阶段的模型。留空使用默认模型。" },
+                      ].map((stage) => (
+                        <FormField
+                          key={stage.name}
+                          control={form.control}
+                          name={stage.name as any}
+                          render={({ field }) => (
+                            <FormItem className="from-item">
+                              <FormLabel className="from-label text-sm">
+                                <HelpTip tip={stage.tip}>
+                                  {stage.label}
+                                </HelpTip>
+                              </FormLabel>
+                              <FormControl>
+                                <Select {...field} onValueChange={field.onChange}>
+                                  <SelectTrigger className="form-field">
+                                    <SelectValue placeholder="留空使用默认" />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-sm:max-h-72">
+                                    {thinkingModelList[0].length > 0 ? (
+                                      <SelectGroup>
+                                        <SelectLabel>推荐模型</SelectLabel>
+                                        {thinkingModelList[0].map((name) => {
+                                          return !isDisabledAIModel(name) ? (
+                                            <SelectItem key={name} value={name}>
+                                              {convertModelName(name)}
+                                            </SelectItem>
+                                          ) : null;
+                                        })}
+                                      </SelectGroup>
+                                    ) : null}
+                                    <SelectGroup>
+                                      <SelectLabel>基础模型</SelectLabel>
+                                      {thinkingModelList[1].map((name) => {
+                                        return !isDisabledAIModel(name) ? (
+                                          <SelectItem key={name} value={name}>
+                                            {convertModelName(name)}
+                                          </SelectItem>
+                                        ) : null;
+                                      })}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                      <div className="text-sm font-medium text-muted-foreground mt-4 mb-2">
+                        UltraThink 专用配置
+                      </div>
+                      {[
+                        { name: "modelStagePlanning", label: "计划生成", tip: "UltraThink 生成计划阶段的模型。" },
+                        { name: "modelStageAgentConfig", label: "Agent 配置", tip: "UltraThink 生成 Agent 配置阶段的模型。" },
+                        { name: "modelStageAgentThinking", label: "Agent 思考", tip: "UltraThink Agent 并行思考阶段的模型。" },
+                        { name: "modelStageSynthesis", label: "结果合成", tip: "UltraThink 合成最终结果阶段的模型。" },
+                      ].map((stage) => (
+                        <FormField
+                          key={stage.name}
+                          control={form.control}
+                          name={stage.name as any}
+                          render={({ field }) => (
+                            <FormItem className="from-item">
+                              <FormLabel className="from-label text-sm">
+                                <HelpTip tip={stage.tip}>
+                                  {stage.label}
+                                </HelpTip>
+                              </FormLabel>
+                              <FormControl>
+                                <Select {...field} onValueChange={field.onChange}>
+                                  <SelectTrigger className="form-field">
+                                    <SelectValue placeholder="留空使用默认" />
+                                  </SelectTrigger>
+                                  <SelectContent className="max-sm:max-h-72">
+                                    {thinkingModelList[0].length > 0 ? (
+                                      <SelectGroup>
+                                        <SelectLabel>推荐模型</SelectLabel>
+                                        {thinkingModelList[0].map((name) => {
+                                          return !isDisabledAIModel(name) ? (
+                                            <SelectItem key={name} value={name}>
+                                              {convertModelName(name)}
+                                            </SelectItem>
+                                          ) : null;
+                                        })}
+                                      </SelectGroup>
+                                    ) : null}
+                                    <SelectGroup>
+                                      <SelectLabel>基础模型</SelectLabel>
+                                      {thinkingModelList[1].map((name) => {
+                                        return !isDisabledAIModel(name) ? (
+                                          <SelectItem key={name} value={name}>
+                                            {convertModelName(name)}
+                                          </SelectItem>
+                                        ) : null;
+                                      })}
+                                    </SelectGroup>
+                                  </SelectContent>
+                                </Select>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </TabsContent>
               <TabsContent className="space-y-4  min-h-[250px]" value="search">
