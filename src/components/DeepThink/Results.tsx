@@ -44,6 +44,40 @@ export function DeepThinkResults({
         </div>
       </div>
 
+      {/* Clarification Questions & User Answers */}
+      {result.questions && (
+        <div className="p-4 border rounded-md bg-purple-50 dark:bg-purple-900/10">
+          <h3 className="font-semibold text-lg mb-3 text-purple-700 dark:text-purple-400">
+            ❓ {t("deepThink.results.questions")}
+          </h3>
+          <div className="prose dark:prose-invert max-w-none text-sm">
+            <MagicDown value={result.questions} onChange={() => {}} />
+          </div>
+          {result.userAnswers && (
+            <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800">
+              <h4 className="font-semibold text-sm mb-2 text-purple-600 dark:text-purple-300">
+                💬 {t("deepThink.results.userAnswers")}
+              </h4>
+              <div className="prose dark:prose-invert max-w-none text-sm">
+                <MagicDown value={result.userAnswers} onChange={() => {}} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Thinking Plan */}
+      {result.plan && (
+        <div className="p-4 border rounded-md bg-amber-50 dark:bg-amber-900/10">
+          <h3 className="font-semibold text-lg mb-3 text-amber-700 dark:text-amber-400">
+            📋 {t("deepThink.results.thinkingPlan")}
+          </h3>
+          <div className="prose dark:prose-invert max-w-none text-sm">
+            <MagicDown value={result.plan} onChange={() => {}} />
+          </div>
+        </div>
+      )}
+
       {/* Final Solution - Show summary if available, otherwise show finalSolution */}
       <div className="p-4 border rounded-md">
         <h3 className="font-semibold text-lg mb-3">
@@ -53,6 +87,41 @@ export function DeepThinkResults({
           <MagicDown value={result.summary || result.finalSolution} onChange={() => {}} />
         </div>
       </div>
+
+      {/* Knowledge Sources - Show if knowledge enhancement was used */}
+      {result.sources && result.sources.length > 0 && (
+        <div className="p-4 border rounded-md bg-blue-50 dark:bg-blue-900/10">
+          <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+            <span className="text-blue-600 dark:text-blue-400">🔍</span>
+            {t("deepThink.results.knowledgeSources")}
+            <span className="text-sm font-normal text-gray-500">
+              ({result.sources.length})
+            </span>
+          </h3>
+          <div className="space-y-2">
+            {result.sources.map((source, idx) => (
+              <div
+                key={idx}
+                className="p-3 bg-white dark:bg-gray-800 rounded border border-blue-200 dark:border-blue-800"
+              >
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-blue-600 dark:text-blue-400 hover:underline block mb-1"
+                >
+                  [{idx + 1}] {source.title || source.url}
+                </a>
+                {source.content && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                    {source.content}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Iterations Toggle */}
       {result.iterations.length > 0 && (
@@ -145,6 +214,28 @@ export function UltraThinkResults({
         </div>
       </div>
 
+      {/* Clarification Questions & User Answers */}
+      {result.questions && (
+        <div className="p-4 border rounded-md bg-purple-50 dark:bg-purple-900/10">
+          <h3 className="font-semibold text-lg mb-3 text-purple-700 dark:text-purple-400">
+            ❓ {t("deepThink.results.questions")}
+          </h3>
+          <div className="prose dark:prose-invert max-w-none text-sm">
+            <MagicDown value={result.questions} onChange={() => {}} />
+          </div>
+          {result.userAnswers && (
+            <div className="mt-3 pt-3 border-t border-purple-200 dark:border-purple-800">
+              <h4 className="font-semibold text-sm mb-2 text-purple-600 dark:text-purple-300">
+                💬 {t("deepThink.results.userAnswers")}
+              </h4>
+              <div className="prose dark:prose-invert max-w-none text-sm">
+                <MagicDown value={result.userAnswers} onChange={() => {}} />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Final Synthesis - Show summary if available, otherwise show synthesis */}
       <div className="p-4 border rounded-md">
         <h3 className="font-semibold text-lg mb-3">
@@ -154,6 +245,41 @@ export function UltraThinkResults({
           <MagicDown value={result.summary || result.synthesis} onChange={() => {}} />
         </div>
       </div>
+
+      {/* Knowledge Sources - Show if knowledge enhancement was used */}
+      {result.sources && result.sources.length > 0 && (
+        <div className="p-4 border rounded-md bg-blue-50 dark:bg-blue-900/10">
+          <h3 className="font-semibold text-lg mb-3 flex items-center gap-2">
+            <span className="text-blue-600 dark:text-blue-400">🔍</span>
+            {t("deepThink.results.knowledgeSources")}
+            <span className="text-sm font-normal text-gray-500">
+              ({result.sources.length})
+            </span>
+          </h3>
+          <div className="space-y-2">
+            {result.sources.map((source, idx) => (
+              <div
+                key={idx}
+                className="p-3 bg-white dark:bg-gray-800 rounded border border-blue-200 dark:border-blue-800"
+              >
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-blue-600 dark:text-blue-400 hover:underline block mb-1"
+                >
+                  [{idx + 1}] {source.title || source.url}
+                </a>
+                {source.content && (
+                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                    {source.content}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Agent Results */}
       <div className="border rounded-md p-4">

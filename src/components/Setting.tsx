@@ -178,6 +178,8 @@ const formSchema = z.object({
   modelStageAgentConfig: z.string().optional(),
   modelStageAgentThinking: z.string().optional(),
   modelStageSynthesis: z.string().optional(),
+  enableAskQuestions: z.enum(["enable", "disable"]).optional(),
+  enablePlanning: z.enum(["enable", "disable"]).optional(),
 });
 
 function convertModelName(name: string) {
@@ -2287,6 +2289,59 @@ function Setting({ open, onClose }: SettingProps) {
                       ))}
                     </div>
                   )}
+
+                  {/* DeepThink 询问和计划阶段配置 */}
+                  <div className="mt-6 space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="enableAskQuestions"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="from-label">
+                            <HelpTip tip="在开始深度思考前，AI 会先提出澄清问题以更好理解问题。注意：当前版本暂不支持用户交互回答，仅展示问题。">
+                              启用询问阶段
+                            </HelpTip>
+                          </FormLabel>
+                          <FormControl>
+                            <Select {...field} onValueChange={field.onChange}>
+                              <SelectTrigger className="form-field">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="enable">启用</SelectItem>
+                                <SelectItem value="disable">禁用</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="enablePlanning"
+                      render={({ field }) => (
+                        <FormItem className="from-item">
+                          <FormLabel className="from-label">
+                            <HelpTip tip="在开始深度思考前，AI 会先制定一个结构化的思考计划，包括问题分解、分析策略等，作为思考的路线图。">
+                              启用计划阶段
+                            </HelpTip>
+                          </FormLabel>
+                          <FormControl>
+                            <Select {...field} onValueChange={field.onChange}>
+                              <SelectTrigger className="form-field">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="enable">启用</SelectItem>
+                                <SelectItem value="disable">禁用</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
               </TabsContent>
               <TabsContent className="space-y-4  min-h-[250px]" value="search">

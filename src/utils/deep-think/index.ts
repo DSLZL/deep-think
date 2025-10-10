@@ -12,6 +12,8 @@ import {
   generateAgentPromptsPrompt,
   synthesizeResultsPrompt,
   buildFinalSummaryPrompt,
+  buildAskQuestionsPrompt,
+  buildThinkingPlanPrompt,
 } from "./prompts";
 
 type ProviderOptions = Record<string, Record<string, JSONValue>>;
@@ -50,6 +52,12 @@ export interface DeepThinkOptions {
     provider: string;
     maxResult?: number;
   };
+  /** 是否启用询问阶段 - 在开始前提出澄清问题 */
+  enableAskQuestions?: boolean;
+  /** 用户对询问的回答（如果有的话） */
+  userAnswers?: string;
+  /** 是否启用计划阶段 - 在开始前制定思考计划 */
+  enablePlanning?: boolean;
   onProgress?: (event: DeepThinkProgressEvent) => void;
   createModelProvider: (model: string, options?: any) => Promise<any>;
   thinkingModel: string;
@@ -60,6 +68,8 @@ export interface DeepThinkOptions {
 
 export type DeepThinkProgressEvent =
   | { type: "init"; data: { problem: string } }
+  | { type: "asking"; data: { questions: string } }
+  | { type: "planning"; data: { plan: string } }
   | { type: "thinking"; data: { iteration: number; phase: string } }
   | { type: "solution"; data: { solution: string; iteration: number } }
   | { type: "verification"; data: { passed: boolean; iteration: number } }
@@ -71,6 +81,7 @@ export type DeepThinkProgressEvent =
 
 export class DeepThinkEngine {
   private options: DeepThinkOptions;
+  private sources: Source[] = []; // 追踪所有搜索来源
 
   constructor(options: DeepThinkOptions) {
     this.options = {
@@ -94,6 +105,43 @@ export class DeepThinkEngine {
    */
   private getModelForStage(stage: keyof ModelStageConfig): string {
     return this.options.modelStages?.[stage] || this.options.thinkingModel;
+  }
+
+  /**
+   * 从 generateText 结果中提取搜索来源
+   */
+  private extractSourcesFromResult(result: any): void {
+    if (!result.experimental_providerMetadata) return;
+    
+    const metadata = result.experimental_providerMetadata;
+    
+    // OpenAI 搜索结果提取
+    if (metadata.openai?.webSearch?.results) {
+      const searchResults = metadata.openai.webSearch.results;
+      searchResults.forEach((item: any) => {
+        if (item.url && item.title) {
+          this.sources.push({
+            url: item.url,
+            title: item.title,
+            content: item.snippet || item.content || "",
+          });
+        }
+      });
+    }
+    
+    // OpenRouter 搜索结果提取 (如果有的话)
+    if (metadata.openrouter?.webSearch?.results) {
+      const searchResults = metadata.openrouter.webSearch.results;
+      searchResults.forEach((item: any) => {
+        if (item.url && item.title) {
+          this.sources.push({
+            url: item.url,
+            title: item.title,
+            content: item.snippet || item.content || "",
+          });
+        }
+      });
+    }
   }
 
   private async getSearchTools(): Promise<Tools | undefined> {
@@ -155,6 +203,61 @@ export class DeepThinkEngine {
     } else {
       return solution.substring(0, idx).trim();
     }
+  }
+
+  /**
+   * 询问阶段 - 生成澄清问题
+   */
+  private async askQuestions(problemStatement: string): Promise<string> {
+    this.emit({
+      type: "progress",
+      data: { message: "Generating clarification questions..." },
+    });
+
+    const model = await this.options.createModelProvider(this.options.thinkingModel);
+    const prompt = buildAskQuestionsPrompt(problemStatement);
+
+    const result = await generateText({
+      model,
+      prompt,
+    });
+
+    const questions = result.text;
+    this.emit({
+      type: "asking",
+      data: { questions },
+    });
+
+    return questions;
+  }
+
+  /**
+   * 计划阶段 - 生成思考计划
+   */
+  private async generateThinkingPlan(
+    problemStatement: string,
+    userAnswers?: string
+  ): Promise<string> {
+    this.emit({
+      type: "progress",
+      data: { message: "Generating thinking plan..." },
+    });
+
+    const model = await this.options.createModelProvider(this.options.thinkingModel);
+    const prompt = buildThinkingPlanPrompt(problemStatement, userAnswers);
+
+    const result = await generateText({
+      model,
+      prompt,
+    });
+
+    const plan = result.text;
+    this.emit({
+      type: "planning",
+      data: { plan },
+    });
+
+    return plan;
   }
 
   private async verifySolution(
@@ -234,6 +337,9 @@ export class DeepThinkEngine {
       providerOptions: this.getProviderOptions(),
     });
 
+    // 提取搜索来源
+    this.extractSourcesFromResult(firstResult);
+
     const firstSolution = firstResult.text;
     this.emit({
       type: "solution",
@@ -269,6 +375,9 @@ export class DeepThinkEngine {
       providerOptions: this.getProviderOptions(),
     });
 
+    // 提取搜索来源
+    this.extractSourcesFromResult(improvementResult);
+
     const improvedSolution = improvementResult.text;
     this.emit({
       type: "solution",
@@ -299,6 +408,28 @@ export class DeepThinkEngine {
     const maxErrors = this.options.maxErrorsBeforeGiveUp!;
 
     this.emit({ type: "init", data: { problem: problemStatement } });
+
+    let questions: string | undefined;
+    let plan: string | undefined;
+
+    // Ask questions phase (optional)
+    if (this.options.enableAskQuestions) {
+      questions = await this.askQuestions(problemStatement);
+      // Note: In a real implementation, this would pause and wait for user answers
+      // For now, we'll continue with the userAnswers if provided
+    }
+
+    // Planning phase (optional)
+    if (this.options.enablePlanning) {
+      plan = await this.generateThinkingPlan(
+        problemStatement,
+        this.options.userAnswers
+      );
+      // Add plan to otherPrompts for context
+      if (plan) {
+        otherPrompts.push(`\n### Thinking Plan ###\n${plan}\n`);
+      }
+    }
 
     // Initial exploration
     const initial = await this.initialExploration(problemStatement, otherPrompts);
@@ -376,6 +507,9 @@ export class DeepThinkEngine {
           providerOptions: this.getProviderOptions(),
         });
 
+        // 提取搜索来源
+        this.extractSourcesFromResult(correctionResult);
+
         solution = correctionResult.text;
         this.emit({
           type: "solution",
@@ -415,6 +549,9 @@ export class DeepThinkEngine {
 
         return {
           mode: "deep-think",
+          questions,
+          userAnswers: this.options.userAnswers,
+          plan,
           initialThought: initial.solution,
           improvements: [],
           iterations,
@@ -423,6 +560,8 @@ export class DeepThinkEngine {
           summary: finalSummary,
           totalIterations: i + 1,
           successfulVerifications: correctCount,
+          sources: this.sources.length > 0 ? this.sources : undefined,
+          knowledgeEnhanced: this.sources.length > 0,
         };
       }
 
@@ -465,6 +604,9 @@ export class DeepThinkEngine {
 
     return {
       mode: "deep-think",
+      questions,
+      userAnswers: this.options.userAnswers,
+      plan,
       initialThought: initial.solution,
       improvements: [],
       iterations,
@@ -473,6 +615,8 @@ export class DeepThinkEngine {
       summary: finalSummary,
       totalIterations: maxIterations,
       successfulVerifications: correctCount,
+      sources: this.sources.length > 0 ? this.sources : undefined,
+      knowledgeEnhanced: this.sources.length > 0,
     };
   }
 }
@@ -485,6 +629,7 @@ export interface UltraThinkOptions extends DeepThinkOptions {
 
 export class UltraThinkEngine {
   private options: UltraThinkOptions;
+  private sources: Source[] = []; // 追踪所有搜索来源
 
   constructor(options: UltraThinkOptions) {
     this.options = {
@@ -709,6 +854,11 @@ export class UltraThinkEngine {
       result.status = "completed";
       result.progress = 100;
 
+      // 收集 agent 的搜索来源
+      if (deepThinkResult.sources && deepThinkResult.sources.length > 0) {
+        this.sources.push(...deepThinkResult.sources);
+      }
+
       if (onAgentProgress) {
         onAgentProgress(config.agentId, {
           status: "completed",
@@ -736,8 +886,36 @@ export class UltraThinkEngine {
 
     this.emit({ type: "init", data: { problem: problemStatement } });
 
-    // Generate plan
-    const plan = await this.generatePlan(problemStatement);
+    let questions: string | undefined;
+
+    // Ask questions phase (optional)
+    if (this.options.enableAskQuestions) {
+      this.emit({
+        type: "progress",
+        data: { message: "Generating clarification questions..." },
+      });
+
+      const model = await this.options.createModelProvider(this.options.thinkingModel);
+      const prompt = buildAskQuestionsPrompt(problemStatement);
+
+      const result = await generateText({
+        model,
+        prompt,
+      });
+
+      questions = result.text;
+      this.emit({
+        type: "asking",
+        data: { questions },
+      });
+    }
+
+    // Generate plan (with user answers if provided)
+    const plan = await this.generatePlan(
+      this.options.userAnswers
+        ? `${problemStatement}\n\n### User Provided Context ###\n${this.options.userAnswers}`
+        : problemStatement
+    );
 
     // Generate agent configs
     const configs = await this.generateAgentConfigs(plan);
@@ -832,6 +1010,8 @@ ${result.solution || "No solution generated"}
 
     return {
       mode: "ultra-think",
+      questions,
+      userAnswers: this.options.userAnswers,
       plan,
       agentResults,
       synthesis,
@@ -840,6 +1020,8 @@ ${result.solution || "No solution generated"}
       totalAgents: numAgents,
       completedAgents: agentResults.filter((r) => r.status === "completed")
         .length,
+      sources: this.sources.length > 0 ? this.sources : undefined,
+      knowledgeEnhanced: this.sources.length > 0,
     };
   }
 }

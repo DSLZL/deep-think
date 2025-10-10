@@ -36,6 +36,14 @@ function useDeepThinkEngine() {
         setCurrentIteration(0);
         setCurrentPhase("initializing");
         break;
+      case "asking":
+        setCurrentPhase("asking");
+        setStatus(t("deepThink.status.asking"));
+        break;
+      case "planning":
+        setCurrentPhase("planning");
+        setStatus(t("deepThink.status.planning"));
+        break;
       case "thinking":
         setCurrentIteration(event.data.iteration);
         setCurrentPhase(event.data.phase);
@@ -104,6 +112,8 @@ function useDeepThinkEngine() {
         modelStageVerification,
         modelStageCorrection,
         modelStageSummary,
+        enableAskQuestions,
+        enablePlanning,
       } = useSettingStore.getState();
 
       // 检查模型是否支持网页搜索
@@ -126,6 +136,8 @@ function useDeepThinkEngine() {
         knowledgeContext,
         enableWebSearch: enableWebSearch || undefined,
         searchProvider: enableWebSearch ? { provider: "model", maxResult: 5 } : undefined,
+        enableAskQuestions: enableAskQuestions === "enable",
+        enablePlanning: enablePlanning === "enable",
         createModelProvider,
         thinkingModel: model,
         modelStages,
@@ -161,6 +173,8 @@ function useDeepThinkEngine() {
         modelStageAgentConfig,
         modelStageAgentThinking,
         modelStageSynthesis,
+        enableAskQuestions,
+        enablePlanning,
       } = useSettingStore.getState();
 
       // 检查模型是否支持网页搜索
@@ -205,6 +219,8 @@ function useDeepThinkEngine() {
         knowledgeContext,
         enableWebSearch: enableWebSearch || undefined,
         searchProvider: enableWebSearch ? { provider: "model", maxResult: 5 } : undefined,
+        enableAskQuestions: enableAskQuestions === "enable",
+        enablePlanning: enablePlanning === "enable",
         numAgents, // Can be undefined - LLM will decide
         createModelProvider,
         thinkingModel: model,

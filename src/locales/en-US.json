@@ -257,6 +257,8 @@
     },
     "status": {
       "initializing": "Initializing...",
+      "asking": "Generating clarification questions...",
+      "planning": "Creating thinking plan...",
       "thinking": "Thinking (Round {{iteration}} - {{phase}})",
       "generatedSolution": "Generated solution for round {{iteration}}",
       "verification": "Verification {{result}}",
@@ -310,7 +312,11 @@
       "originalPlan": "Original Plan",
       "viewBugReport": "View Bug Report",
       "viewVerifications": "View Verifications",
-      "error": "Error"
+      "error": "Error",
+      "knowledgeSources": "Knowledge Sources",
+      "questions": "Clarification Questions",
+      "userAnswers": "User Answers",
+      "thinkingPlan": "Thinking Plan"
     },
     "config": {
       "numAgents": "Number of Agents",

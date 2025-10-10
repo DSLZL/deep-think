@@ -257,6 +257,8 @@
     },
     "status": {
       "initializing": "初始化中...",
+      "asking": "生成澄清问题...",
+      "planning": "制定思考计划...",
       "thinking": "思考中 (第 {{iteration}} 轮 - {{phase}})",
       "generatedSolution": "已生成第 {{iteration}} 轮解决方案",
       "verification": "验证{{result}}",
@@ -310,7 +312,11 @@
       "originalPlan": "原始计划",
       "viewBugReport": "查看问题报告",
       "viewVerifications": "查看验证记录",
-      "error": "错误"
+      "error": "错误",
+      "knowledgeSources": "知识来源",
+      "questions": "澄清问题",
+      "userAnswers": "用户回答",
+      "thinkingPlan": "思考计划"
     },
     "config": {
       "numAgents": "Agent 数量",

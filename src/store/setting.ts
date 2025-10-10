@@ -90,6 +90,9 @@ export interface SettingStore {
   modelStageAgentConfig: string;
   modelStageAgentThinking: string;
   modelStageSynthesis: string;
+  // DeepThink 询问和计划阶段
+  enableAskQuestions: "enable" | "disable";
+  enablePlanning: "enable" | "disable";
 }
 
 interface SettingActions {
@@ -186,6 +189,8 @@ export const defaultValues: SettingStore = {
   modelStageAgentConfig: "",
   modelStageAgentThinking: "",
   modelStageSynthesis: "",
+  enableAskQuestions: "disable",
+  enablePlanning: "disable",
 };
 
 export const useSettingStore = create(

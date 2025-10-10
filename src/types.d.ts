@@ -79,6 +79,9 @@ interface DeepThinkIteration {
 
 interface DeepThinkResult {
   mode: "deep-think";
+  questions?: string; // 询问阶段生成的问题
+  userAnswers?: string; // 用户的回答
+  plan?: string; // 思考计划
   initialThought: string;
   improvements: string[];
   iterations: DeepThinkIteration[];
@@ -87,6 +90,8 @@ interface DeepThinkResult {
   summary?: string;
   totalIterations: number;
   successfulVerifications: number;
+  sources?: Source[]; // 引用来源追踪
+  knowledgeEnhanced?: boolean; // 是否使用了知识增强
 }
 
 interface AgentResult {
@@ -102,6 +107,8 @@ interface AgentResult {
 
 interface UltraThinkResult {
   mode: "ultra-think";
+  questions?: string; // 询问阶段生成的问题
+  userAnswers?: string; // 用户的回答
   plan: string;
   agentResults: AgentResult[];
   synthesis: string;
@@ -109,6 +116,8 @@ interface UltraThinkResult {
   summary?: string;
   totalAgents: number;
   completedAgents: number;
+  sources?: Source[]; // 引用来源追踪
+  knowledgeEnhanced?: boolean; // 是否使用了知识增强
 }
 
 type ThinkResult = DeepThinkResult | UltraThinkResult;

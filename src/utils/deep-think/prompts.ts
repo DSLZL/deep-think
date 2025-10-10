@@ -325,3 +325,68 @@ export function buildInitialThinkingPrompt(
   return prompt;
 }
 
+// ===== Ask Questions Prompts =====
+export const askQuestionsPrompt = `Given the following problem or question from the user:
+
+<PROBLEM>
+{problem}
+</PROBLEM>
+
+To provide the most thorough and accurate deep thinking analysis, you need to gather more context and clarification.
+
+Generate 5-7 focused follow-up questions that will help you:
+1. Understand the core requirements and constraints better
+2. Identify any ambiguities or missing information
+3. Clarify the expected outcome or success criteria
+4. Understand the context and background
+5. Identify potential edge cases or special considerations
+
+Output the questions in a clear, numbered list format. Each question should be:
+- Specific and actionable
+- Directly relevant to improving your analysis
+- Brief and easy to understand
+
+Focus on questions that will genuinely improve your thinking process, not generic questions.`;
+
+// ===== Planning Prompts =====
+export const thinkingPlanPrompt = `Given the following problem or question from the user:
+
+<PROBLEM>
+{problem}
+</PROBLEM>
+
+{userAnswers}
+
+Before diving into deep thinking, create a structured thinking plan that will guide your analysis.
+
+Your plan should outline:
+1. **Problem Decomposition**: How will you break down this problem into manageable components?
+2. **Key Analysis Areas**: What are the critical aspects that need thorough examination?
+3. **Thinking Strategy**: What approach will you use (e.g., first principles, comparative analysis, causal reasoning, etc.)?
+4. **Success Criteria**: How will you know when you have a complete and satisfactory answer?
+5. **Potential Pitfalls**: What common mistakes or misconceptions should you avoid?
+
+Structure your plan in clear sections with brief explanations. This plan will serve as a roadmap for your deep thinking process.
+
+Keep the plan focused and practical - it should guide your thinking, not constrain it.`;
+
+// Helper functions
+export function buildAskQuestionsPrompt(problem: string): string {
+  return askQuestionsPrompt.replace("{problem}", problem);
+}
+
+export function buildThinkingPlanPrompt(problem: string, userAnswers?: string): string {
+  let prompt = thinkingPlanPrompt.replace("{problem}", problem);
+  
+  if (userAnswers) {
+    prompt = prompt.replace(
+      "{userAnswers}",
+      "\n<USER_PROVIDED_CONTEXT>\n" + userAnswers + "\n</USER_PROVIDED_CONTEXT>\n"
+    );
+  } else {
+    prompt = prompt.replace("{userAnswers}", "");
+  }
+  
+  return prompt;
+}
+
