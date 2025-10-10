@@ -84,6 +84,7 @@ interface DeepThinkResult {
   iterations: DeepThinkIteration[];
   verifications: Verification[];
   finalSolution: string;
+  summary?: string;
   totalIterations: number;
   successfulVerifications: number;
 }
@@ -105,6 +106,7 @@ interface UltraThinkResult {
   agentResults: AgentResult[];
   synthesis: string;
   finalSolution: string;
+  summary?: string;
   totalAgents: number;
   completedAgents: number;
 }

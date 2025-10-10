@@ -44,13 +44,13 @@ export function DeepThinkResults({
         </div>
       </div>
 
-      {/* Final Solution */}
+      {/* Final Solution - Show summary if available, otherwise show finalSolution */}
       <div className="p-4 border rounded-md">
         <h3 className="font-semibold text-lg mb-3">
           {t("deepThink.results.finalSolution")}
         </h3>
         <div className="prose dark:prose-invert max-w-none">
-          <MagicDown value={result.finalSolution} onChange={() => {}} />
+          <MagicDown value={result.summary || result.finalSolution} onChange={() => {}} />
         </div>
       </div>
 
@@ -145,13 +145,13 @@ export function UltraThinkResults({
         </div>
       </div>
 
-      {/* Final Synthesis */}
+      {/* Final Synthesis - Show summary if available, otherwise show synthesis */}
       <div className="p-4 border rounded-md">
         <h3 className="font-semibold text-lg mb-3">
           {t("deepThink.results.synthesis")}
         </h3>
         <div className="prose dark:prose-invert max-w-none">
-          <MagicDown value={result.synthesis} onChange={() => {}} />
+          <MagicDown value={result.summary || result.synthesis} onChange={() => {}} />
         </div>
       </div>
 

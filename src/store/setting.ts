@@ -85,6 +85,7 @@ export interface SettingStore {
   modelStageImprovement: string;
   modelStageVerification: string;
   modelStageCorrection: string;
+  modelStageSummary: string;
   modelStagePlanning: string;
   modelStageAgentConfig: string;
   modelStageAgentThinking: string;
@@ -180,6 +181,7 @@ export const defaultValues: SettingStore = {
   modelStageImprovement: "",
   modelStageVerification: "",
   modelStageCorrection: "",
+  modelStageSummary: "",
   modelStagePlanning: "",
   modelStageAgentConfig: "",
   modelStageAgentThinking: "",

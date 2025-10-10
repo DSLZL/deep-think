@@ -263,6 +263,44 @@ Synthesize these results into a unified, comprehensive response.
 - Make your final answer clear and actionable
 - Include practical recommendations when relevant`;
 
+export const finalSummaryPrompt = `You have completed a comprehensive analysis of the user's question through a rigorous thinking process. Now, create a clear, well-organized final response for the user.
+
+**CRITICAL GUIDELINES:**
+- **DO NOT** reveal the internal thinking process, iterations, or verification steps
+- **DO NOT** mention "agents", "verification", "corrections", or any meta-process details
+- **FOCUS** on providing a direct, comprehensive answer to the user's original question
+- **ORGANIZE** the response according to the user's needs and question structure
+- **PRESENT** insights as if they came from a single, coherent analysis
+- **USE** appropriate formatting (headings, lists, code blocks, diagrams) for clarity
+- **BE THOROUGH** but concise - include all important insights without redundancy
+
+**Your task:**
+Take the analytical work that has been done and transform it into a polished, user-focused response that:
+1. Directly addresses the user's question
+2. Presents findings in a logical, easy-to-follow structure
+3. Includes practical recommendations or next steps if relevant
+4. Acknowledges any limitations or caveats appropriately
+5. Uses clear, professional language without exposing internal mechanics
+
+Remember: The user should receive a high-quality answer, not a report about how you arrived at it.`;
+
+export const buildFinalSummaryPrompt = (
+  problemStatement: string,
+  analysisResult: string
+): string => {
+  return `${finalSummaryPrompt}
+
+<ORIGINAL_QUESTION>
+${problemStatement}
+</ORIGINAL_QUESTION>
+
+<ANALYSIS_RESULT>
+${analysisResult}
+</ANALYSIS_RESULT>
+
+Now create the final, polished response for the user. Start directly with the answer - no preamble about the process.`;
+};
+
 export function buildInitialThinkingPrompt(
   problemStatement: string,
   otherPrompts: string[] = [],

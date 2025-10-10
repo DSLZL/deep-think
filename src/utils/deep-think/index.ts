@@ -11,6 +11,7 @@ import {
   ultraThinkPlanPrompt,
   generateAgentPromptsPrompt,
   synthesizeResultsPrompt,
+  buildFinalSummaryPrompt,
 } from "./prompts";
 
 type ProviderOptions = Record<string, Record<string, JSONValue>>;
@@ -25,6 +26,8 @@ export interface ModelStageConfig {
   verification?: string;
   /** 修正阶段的模型 */
   correction?: string;
+  /** 最终总结阶段的模型 */
+  summary?: string;
   /** UltraThink: 生成计划阶段的模型 */
   planning?: string;
   /** UltraThink: 生成agent配置阶段的模型 */
@@ -61,6 +64,7 @@ export type DeepThinkProgressEvent =
   | { type: "solution"; data: { solution: string; iteration: number } }
   | { type: "verification"; data: { passed: boolean; iteration: number } }
   | { type: "correction"; data: { iteration: number } }
+  | { type: "summarizing"; data: { message: string } }
   | { type: "success"; data: { solution: string; iterations: number } }
   | { type: "failure"; data: { reason: string } }
   | { type: "progress"; data: { message: string } };
@@ -383,9 +387,30 @@ export class DeepThinkEngine {
       }
 
       if (correctCount >= requiredSuccesses) {
+        // Generate final summary for the user
+        this.emit({
+          type: "summarizing",
+          data: { message: "Generating final summary..." },
+        });
+
+        const summaryModel = this.getModelForStage("summary");
+        const summaryModelProvider = await this.options.createModelProvider(summaryModel);
+
+        const summaryPrompt = buildFinalSummaryPrompt(
+          problemStatement,
+          solution
+        );
+
+        const summaryResult = await generateText({
+          model: summaryModelProvider,
+          prompt: summaryPrompt,
+        });
+
+        const finalSummary = summaryResult.text;
+
         this.emit({
           type: "success",
-          data: { solution, iterations: i + 1 },
+          data: { solution: finalSummary, iterations: i + 1 },
         });
 
         return {
@@ -395,6 +420,7 @@ export class DeepThinkEngine {
           iterations,
           verifications,
           finalSolution: solution,
+          summary: finalSummary,
           totalIterations: i + 1,
           successfulVerifications: correctCount,
         };
@@ -411,7 +437,27 @@ export class DeepThinkEngine {
       });
     }
 
-    // Failed to find solution
+    // Failed to find solution - still generate a summary with what we have
+    this.emit({
+      type: "summarizing",
+      data: { message: "Generating final summary..." },
+    });
+
+    const summaryModel = this.getModelForStage("summary");
+    const summaryModelProvider = await this.options.createModelProvider(summaryModel);
+
+    const summaryPrompt = buildFinalSummaryPrompt(
+      problemStatement,
+      solution
+    );
+
+    const summaryResult = await generateText({
+      model: summaryModelProvider,
+      prompt: summaryPrompt,
+    });
+
+    const finalSummary = summaryResult.text;
+
     this.emit({
       type: "failure",
       data: { reason: "Max iterations reached" },
@@ -424,6 +470,7 @@ export class DeepThinkEngine {
       iterations,
       verifications,
       finalSolution: solution,
+      summary: finalSummary,
       totalIterations: maxIterations,
       successfulVerifications: correctCount,
     };
@@ -757,9 +804,30 @@ ${result.solution || "No solution generated"}
 
     const synthesis = synthesisResult.text;
 
+    // Generate final summary for the user
+    this.emit({
+      type: "summarizing",
+      data: { message: "Creating final summary for user..." },
+    });
+
+    const summaryModel = this.getModelForStage("summary");
+    const summaryModelProvider = await this.options.createModelProvider(summaryModel);
+
+    const summaryPrompt = buildFinalSummaryPrompt(
+      problemStatement,
+      synthesis
+    );
+
+    const summaryResultFinal = await generateText({
+      model: summaryModelProvider,
+      prompt: summaryPrompt,
+    });
+
+    const finalSummary = summaryResultFinal.text;
+
     this.emit({
       type: "success",
-      data: { solution: synthesis, iterations: 1 },
+      data: { solution: finalSummary, iterations: 1 },
     });
 
     return {
@@ -768,6 +836,7 @@ ${result.solution || "No solution generated"}
       agentResults,
       synthesis,
       finalSolution: synthesis,
+      summary: finalSummary,
       totalAgents: numAgents,
       completedAgents: agentResults.filter((r) => r.status === "completed")
         .length,

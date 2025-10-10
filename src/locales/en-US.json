@@ -261,6 +261,7 @@
       "generatedSolution": "Generated solution for round {{iteration}}",
       "verification": "Verification {{result}}",
       "correcting": "Correcting (Round {{iteration}})",
+      "summarizing": "Generating final summary...",
       "success": "Complete solution found!",
       "failure": "Failed to find complete solution"
     },

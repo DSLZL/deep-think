@@ -70,6 +70,10 @@ function useDeepThinkEngine() {
           })
         );
         break;
+      case "summarizing":
+        setCurrentPhase("summarizing");
+        setStatus(t("deepThink.status.summarizing"));
+        break;
       case "success":
         setStatus(t("deepThink.status.success"));
         toast.success(t("deepThink.status.success"));
@@ -99,6 +103,7 @@ function useDeepThinkEngine() {
         modelStageImprovement,
         modelStageVerification,
         modelStageCorrection,
+        modelStageSummary,
       } = useSettingStore.getState();
 
       // 检查模型是否支持网页搜索
@@ -112,6 +117,7 @@ function useDeepThinkEngine() {
         improvement: modelStageImprovement || undefined,
         verification: modelStageVerification || undefined,
         correction: modelStageCorrection || undefined,
+        summary: modelStageSummary || undefined,
       } : undefined;
 
       const result = await runDeepThink({
@@ -150,6 +156,7 @@ function useDeepThinkEngine() {
         modelStageImprovement,
         modelStageVerification,
         modelStageCorrection,
+        modelStageSummary,
         modelStagePlanning,
         modelStageAgentConfig,
         modelStageAgentThinking,
@@ -167,6 +174,7 @@ function useDeepThinkEngine() {
         improvement: modelStageImprovement || undefined,
         verification: modelStageVerification || undefined,
         correction: modelStageCorrection || undefined,
+        summary: modelStageSummary || undefined,
         planning: modelStagePlanning || undefined,
         agentConfig: modelStageAgentConfig || undefined,
         agentThinking: modelStageAgentThinking || undefined,
