@@ -12,10 +12,12 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 import ResourceList from "@/components/Knowledge/ResourceList";
 import Crawler from "@/components/Knowledge/Crawler";
 import ModeSelector from "@/components/DeepThink/ModeSelector";
 import { Button } from "@/components/Internal/Button";
+import MagicDown from "@/components/MagicDown";
 import {
   Form,
   FormControl,
@@ -32,7 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import useDeepThinkEngine from "@/hooks/useDeepThink";
-import useAiProvider from "@/hooks/useAiProvider";
+import useModelProvider from "@/hooks/useAiProvider";
 import useKnowledge from "@/hooks/useKnowledge";
 import useAccurateTimer from "@/hooks/useAccurateTimer";
 import { useGlobalStore } from "@/store/global";
@@ -50,8 +52,15 @@ function Topic() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const taskStore = useTaskStore();
   const globalStore = useGlobalStore();
-  const { runDeepThinkMode, runUltraThinkMode } = useDeepThinkEngine();
-  const { hasApiKey } = useAiProvider();
+  const { 
+    runDeepThinkMode, 
+    runUltraThinkMode,
+    interactiveState,
+    startInteractiveDeepThink,
+    continueWithAnswers,
+    resetInteractiveState
+  } = useDeepThinkEngine();
+  const { hasApiKey } = useModelProvider();
   const { getKnowledgeFromFile } = useKnowledge();
   const {
     formattedTime,
@@ -61,6 +70,7 @@ function Topic() {
   const [isThinking, setIsThinking] = useState<boolean>(false);
   const [openCrawler, setOpenCrawler] = useState<boolean>(false);
   const [numAgents, setNumAgents] = useState<number>(0); // 0 = auto mode
+  const [userAnswers, setUserAnswers] = useState<string>(""); // 用户回答
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -118,6 +128,8 @@ function Topic() {
         setUltraThinkResult,
         setIsThinking: setGlobalThinking,
       } = useGlobalStore.getState();
+      const { enableAskQuestions } = useSettingStore.getState();
+      
       try {
         setIsThinking(true);
         setGlobalThinking(true);
@@ -131,6 +143,20 @@ function Topic() {
         // 收集知识库资源
         const knowledgeContext = collectKnowledgeContext();
 
+        // 检查是否启用问问题功能（仅对Deep Think模式）
+        if (thinkMode === "deep-think" && enableAskQuestions === "enable") {
+          // 使用交互式Deep Think流程
+          const result = await startInteractiveDeepThink(values.topic, [], knowledgeContext);
+          if (result && result.questions) {
+            // 问题已生成，暂停计时器等待用户回答
+            setIsThinking(false);
+            setGlobalThinking(false);
+            accurateTimerStop();
+          }
+          return; // 提前返回，等待用户回答
+        }
+
+        // 标准非交互流程
         // Route to different modes
         if (thinkMode === "deep-think") {
           const result = await runDeepThinkMode(values.topic, [], knowledgeContext);
@@ -156,10 +182,47 @@ function Topic() {
           }
         }
       } finally {
-        setIsThinking(false);
-        setGlobalThinking(false);
-        accurateTimerStop();
+        // 只有在非交互模式或完成后才重置状态
+        if (!(thinkMode === "deep-think" && enableAskQuestions === "enable") || !interactiveState.isWaitingForAnswers) {
+          setIsThinking(false);
+          setGlobalThinking(false);
+          accurateTimerStop();
+        }
       }
+    }
+  }
+
+  // 处理用户回答并继续Deep Think
+  async function handleAnswersSubmit(answers: string) {
+    const {
+      setDeepThinkResult,
+      setIsThinking: setGlobalThinking,
+    } = useGlobalStore.getState();
+    
+    try {
+      // 重新启动计时器和思考状态
+      setIsThinking(true);
+      setGlobalThinking(true);
+      accurateTimerStart(); // 重新启动计时器！
+      
+      // 继续执行Deep Think
+      const result = await continueWithAnswers(answers);
+      if (result) {
+        setDeepThinkResult(result);
+        // 保存到历史记录
+        const { saveThink } = useHistoryStore.getState();
+        const { question } = useTaskStore.getState();
+        saveThink("deep-think", question, result);
+        // 成功后重置答案
+        setUserAnswers("");
+      }
+    } catch (error) {
+      console.error("继续思考时出错:", error);
+      toast.error("继续思考时出现错误，请重试");
+    } finally {
+      setIsThinking(false);
+      setGlobalThinking(false);
+      accurateTimerStop();
     }
   }
 
@@ -170,6 +233,10 @@ function Topic() {
     if (id) update(id, backup());
     reset();
     resetThinkResults();
+    resetInteractiveState(); // 重置交互状态
+    setUserAnswers(""); // 重置用户答案
+    setIsThinking(false); // 重置思考状态
+    accurateTimerStop(); // 停止计时器
     form.reset();
   }
 
@@ -211,112 +278,181 @@ function Topic() {
           </Button>
         </div>
       </div>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(handleSubmit)}>
-          {/* Mode Selector */}
-          <ModeSelector
-            value={globalStore.thinkMode}
-            onChange={(mode) => {
-              globalStore.setThinkMode(mode);
-              globalStore.resetThinkResults();
-            }}
-            className="mb-4"
-          />
+      {/* 问问题交互界面 - 在同一页面内显示 */}
+      {interactiveState.isWaitingForAnswers && interactiveState.questions ? (
+        <div className="space-y-4">
+          {/* 显示生成的问题 */}
+          <div className="p-4 border rounded-md bg-purple-50 dark:bg-purple-900/10">
+            <h4 className="font-semibold text-lg mb-3 text-purple-700 dark:text-purple-400">
+              💭 {t("deepThink.questions.title")}
+            </h4>
+            <p className="text-sm text-purple-600 dark:text-purple-300 mb-3">
+              {t("deepThink.questions.description")}
+            </p>
+            <div className="prose dark:prose-invert max-w-none text-sm bg-white dark:bg-gray-900 p-3 rounded">
+              <MagicDown value={interactiveState.questions} onChange={() => {}} hideTools />
+            </div>
+          </div>
 
-          {/* Ultra Think Config */}
-          {globalStore.thinkMode === "ultra-think" && (
-            <FormItem className="mb-4">
-              <FormLabel>{t("deepThink.config.numAgents")}</FormLabel>
-              <FormControl>
-                <Input
-                  type="number"
-                  min={0}
-                  max={10}
-                  value={numAgents}
-                  onChange={(e) => setNumAgents(parseInt(e.target.value))}
-                />
-              </FormControl>
-              <p className="text-xs text-gray-500 mt-1">
-                {t("deepThink.config.numAgentsTip")} (0 = Auto)
-              </p>
-            </FormItem>
-          )}
+          {/* 用户回答输入区 */}
+          <div className="p-4 border rounded-md">
+            <h4 className="font-semibold text-base mb-2">
+              ✍️ {t("deepThink.questions.yourAnswers")}
+            </h4>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              {t("deepThink.questions.answerPrompt")}
+            </p>
+            <Textarea
+              value={userAnswers}
+              onChange={(e) => setUserAnswers(e.target.value)}
+              placeholder={t("deepThink.questions.placeholder")}
+              className="min-h-[120px] mb-3"
+              disabled={isThinking}
+            />
+            
+            {/* 帮助提示 */}
+            <div className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg mb-3">
+              <p className="font-medium mb-1">{t("deepThink.questions.tips.title")}</p>
+              <ul className="list-disc list-inside space-y-1 ml-2 text-xs">
+                <li>{t("deepThink.questions.tips.specific")}</li>
+                <li>{t("deepThink.questions.tips.context")}</li>
+                <li>{t("deepThink.questions.tips.constraints")}</li>
+                <li>{t("deepThink.questions.tips.skip")}</li>
+              </ul>
+            </div>
 
-          <FormField
-            control={form.control}
-            name="topic"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="mb-2 text-base font-semibold">
-                  {t("research.topic.topicLabel")}
-                </FormLabel>
+            <Button
+              className="w-full"
+              onClick={() => {
+                if (userAnswers.trim() || window.confirm("确定跳过所有问题直接继续？")) {
+                  handleAnswersSubmit(userAnswers);
+                }
+              }}
+              disabled={isThinking}
+            >
+              {isThinking ? (
+                <>
+                  <LoaderCircle className="animate-spin" />
+                  <span>{t("deepThink.status.thinking", { iteration: 0, phase: "thinking" })}</span>
+                  <small className="font-mono ml-2">{formattedTime}</small>
+                </>
+              ) : (
+                <>
+                  {t("deepThink.questions.continue")}
+                  <span className="ml-2">→</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            {/* Mode Selector */}
+            <ModeSelector
+              value={globalStore.thinkMode}
+              onChange={(mode) => {
+                globalStore.setThinkMode(mode);
+                globalStore.resetThinkResults();
+              }}
+              className="mb-4"
+            />
+
+            {/* Ultra Think Config */}
+            {globalStore.thinkMode === "ultra-think" && (
+              <FormItem className="mb-4">
+                <FormLabel>{t("deepThink.config.numAgents")}</FormLabel>
                 <FormControl>
-                  <Textarea
-                    rows={3}
-                    placeholder={t("research.topic.topicPlaceholder")}
-                    {...field}
+                  <Input
+                    type="number"
+                    min={0}
+                    max={10}
+                    value={numAgents}
+                    onChange={(e) => setNumAgents(parseInt(e.target.value))}
                   />
                 </FormControl>
+                <p className="text-xs text-gray-500 mt-1">
+                  {t("deepThink.config.numAgentsTip")} (0 = Auto)
+                </p>
               </FormItem>
             )}
-          />
-          <FormItem className="mt-2">
-            <FormLabel className="mb-2 text-base font-semibold">
-              {t("knowledge.localResourceTitle")}
-            </FormLabel>
-            <FormControl onSubmit={(ev) => ev.stopPropagation()}>
-              <div>
-                {taskStore.resources.length > 0 ? (
-                  <ResourceList
-                    className="pb-2 mb-2 border-b"
-                    resources={taskStore.resources}
-                    onRemove={taskStore.removeResource}
-                  />
-                ) : null}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <div className="inline-flex border p-2 rounded-md text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
-                      <FilePlus className="w-5 h-5" />
-                      <span className="ml-1">{t("knowledge.addResource")}</span>
-                    </div>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => openKnowledgeList()}>
-                      <BookText />
-                      <span>{t("knowledge.knowledge")}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        handleCheck() && fileInputRef.current?.click()
-                      }
-                    >
-                      <Paperclip />
-                      <span>{t("knowledge.localFile")}</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleCheck() && setOpenCrawler(true)}
-                    >
-                      <Link />
-                      <span>{t("knowledge.webPage")}</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </FormControl>
-          </FormItem>
-          <Button className="w-full mt-4" disabled={isThinking} type="submit">
-            {isThinking ? (
-              <>
-                <LoaderCircle className="animate-spin" />
-                <span>{t("deepThink.status.thinking", { iteration: 0, phase: "initializing" })}</span>
-                <small className="font-mono">{formattedTime}</small>
-              </>
-            ) : (
-              t("research.common.startThinking")
-            )}
-          </Button>
-        </form>
-      </Form>
+
+            <FormField
+              control={form.control}
+              name="topic"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="mb-2 text-base font-semibold">
+                    {t("research.topic.topicLabel")}
+                  </FormLabel>
+                  <FormControl>
+                    <Textarea
+                      rows={3}
+                      placeholder={t("research.topic.topicPlaceholder")}
+                      {...field}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormItem className="mt-2">
+              <FormLabel className="mb-2 text-base font-semibold">
+                {t("knowledge.localResourceTitle")}
+              </FormLabel>
+              <FormControl onSubmit={(ev) => ev.stopPropagation()}>
+                <div>
+                  {taskStore.resources.length > 0 ? (
+                    <ResourceList
+                      className="pb-2 mb-2 border-b"
+                      resources={taskStore.resources}
+                      onRemove={taskStore.removeResource}
+                    />
+                  ) : null}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <div className="inline-flex border p-2 rounded-md text-sm cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <FilePlus className="w-5 h-5" />
+                        <span className="ml-1">{t("knowledge.addResource")}</span>
+                      </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={() => openKnowledgeList()}>
+                        <BookText />
+                        <span>{t("knowledge.knowledge")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() =>
+                          handleCheck() && fileInputRef.current?.click()
+                        }
+                      >
+                        <Paperclip />
+                        <span>{t("knowledge.localFile")}</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleCheck() && setOpenCrawler(true)}
+                      >
+                        <Link />
+                        <span>{t("knowledge.webPage")}</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </FormControl>
+            </FormItem>
+            <Button className="w-full mt-4" disabled={isThinking} type="submit">
+              {isThinking ? (
+                <>
+                  <LoaderCircle className="animate-spin" />
+                  <span>{t("deepThink.status.thinking", { iteration: 0, phase: "initializing" })}</span>
+                  <small className="font-mono">{formattedTime}</small>
+                </>
+              ) : (
+                t("research.common.startThinking")
+              )}
+            </Button>
+          </form>
+        </Form>
+      )}
       <input
         ref={fileInputRef}
         type="file"

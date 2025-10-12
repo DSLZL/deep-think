@@ -58,6 +58,8 @@ export interface DeepThinkOptions {
   userAnswers?: string;
   /** 是否启用计划阶段 - 在开始前制定思考计划 */
   enablePlanning?: boolean;
+  /** 是否启用交互模式 - 在问问题阶段等待用户回答 */
+  enableInteractiveMode?: boolean;
   onProgress?: (event: DeepThinkProgressEvent) => void;
   createModelProvider: (model: string, options?: any) => Promise<any>;
   thinkingModel: string;
@@ -69,6 +71,7 @@ export interface DeepThinkOptions {
 export type DeepThinkProgressEvent =
   | { type: "init"; data: { problem: string } }
   | { type: "asking"; data: { questions: string } }
+  | { type: "waiting_for_answers"; data: { questions: string } }
   | { type: "planning"; data: { plan: string } }
   | { type: "thinking"; data: { iteration: number; phase: string } }
   | { type: "solution"; data: { solution: string; iteration: number } }
@@ -208,7 +211,7 @@ export class DeepThinkEngine {
   /**
    * 询问阶段 - 生成澄清问题
    */
-  private async askQuestions(problemStatement: string): Promise<string> {
+  async askQuestions(problemStatement: string, waitForUserAnswers = false): Promise<string> {
     this.emit({
       type: "progress",
       data: { message: "Generating clarification questions..." },
@@ -227,6 +230,14 @@ export class DeepThinkEngine {
       type: "asking",
       data: { questions },
     });
+
+    // If we need to wait for user answers, emit the waiting event
+    if (waitForUserAnswers) {
+      this.emit({
+        type: "waiting_for_answers",
+        data: { questions },
+      });
+    }
 
     return questions;
   }
@@ -414,9 +425,9 @@ export class DeepThinkEngine {
 
     // Ask questions phase (optional)
     if (this.options.enableAskQuestions) {
-      questions = await this.askQuestions(problemStatement);
-      // Note: In a real implementation, this would pause and wait for user answers
-      // For now, we'll continue with the userAnswers if provided
+      questions = await this.askQuestions(problemStatement, this.options.enableInteractiveMode);
+      // Note: In interactive mode, the process may pause here for user input
+      // The actual continuation will be handled by the calling code
     }
 
     // Planning phase (optional)

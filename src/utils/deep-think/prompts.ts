@@ -334,12 +334,13 @@ export const askQuestionsPrompt = `Given the following problem or question from 
 
 To provide the most thorough and accurate deep thinking analysis, you need to gather more context and clarification.
 
-Generate 5-7 focused follow-up questions that will help you:
+Generate 1-7 focused follow-up questions that will help you:
 1. Understand the core requirements and constraints better
 2. Identify any ambiguities or missing information
 3. Clarify the expected outcome or success criteria
 4. Understand the context and background
 5. Identify potential edge cases or special considerations
+6. Answer in the language required by the question or in the language of the question.
 
 Output the questions in a clear, numbered list format. Each question should be:
 - Specific and actionable

@@ -258,6 +258,7 @@
     "status": {
       "initializing": "Initializing...",
       "asking": "Generating clarification questions...",
+      "waitingForAnswers": "Waiting for user answers...",
       "planning": "Creating thinking plan...",
       "thinking": "Thinking (Round {{iteration}} - {{phase}})",
       "generatedSolution": "Generated solution for round {{iteration}}",
@@ -317,6 +318,23 @@
       "questions": "Clarification Questions",
       "userAnswers": "User Answers",
       "thinkingPlan": "Thinking Plan"
+    },
+    "questions": {
+      "title": "Clarification Questions",
+      "description": "To provide more accurate analysis, please answer the following questions:",
+      "yourAnswers": "Your Answers",
+      "answerPrompt": "Please answer the questions above to help the system better understand your needs. You can answer some questions or skip them all.",
+      "answers": "Answer Content",
+      "placeholder": "Please enter your answers here...\n\nYou can:\n- Answer questions one by one\n- Provide relevant background information\n- Specify special requirements or constraints\n- Skip questions if you're unsure",
+      "continue": "Continue Thinking",
+      "processing": "Processing...",
+      "tips": {
+        "title": "💡 Answer Tips:",
+        "specific": "Provide specific and detailed information",
+        "context": "Include relevant background and context",
+        "constraints": "Mention any constraints or special requirements",
+        "skip": "Skip questions if you're unsure"
+      }
     },
     "config": {
       "numAgents": "Number of Agents",
