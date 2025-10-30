@@ -24,7 +24,4 @@
 
 拥有 deep-research 的全部功能,工作流采用 imo25 魔改版,优化了对通用任务的适应性
 
-## 实例
-
-对 Gemini 2.5 Flash Lite 使用 UltraThink
 
